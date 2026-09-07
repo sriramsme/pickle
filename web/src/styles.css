@@ -1,0 +1,133 @@
+:root {
+  color: #e7e2d9;
+  background: #0b0b0b;
+  font-family: system-ui, sans-serif;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  min-height: 100dvh;
+  background: #0b0b0b;
+}
+
+.app {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100vw;
+  height: var(--viewport-height, 100dvh);
+  padding: max(8px, env(safe-area-inset-top))
+    max(8px, env(safe-area-inset-right))
+    max(8px, env(safe-area-inset-bottom))
+    max(8px, env(safe-area-inset-left));
+  background: #0b0b0b;
+}
+
+.terminal {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.connection-status {
+  position: absolute;
+  z-index: 1;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right));
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 7px;
+  border: 1px solid #252525;
+  border-radius: 999px;
+  color: #8f8a82;
+  background: #111111d9;
+  font-size: 11px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.connection-status span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6d6860;
+}
+
+.connection-status.connected span {
+  background: #e68e0d;
+}
+
+.connection-status.connecting span {
+  background: #b8791c;
+}
+
+.xterm {
+  height: 100%;
+}
+
+.terminal .xterm {
+  touch-action: none;
+}
+
+.xterm .xterm-viewport {
+  overscroll-behavior: contain;
+}
+
+.terminal-toolbar {
+  display: none;
+}
+
+@media (any-pointer: coarse), (hover: none) and (max-width: 1366px) {
+  .terminal-toolbar {
+    display: flex;
+    flex: none;
+    gap: 6px;
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .terminal-toolbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .terminal-toolbar button {
+    flex: none;
+    min-width: 42px;
+    height: 38px;
+    padding: 0 10px;
+    border: 1px solid #2a2927;
+    border-radius: 7px;
+    color: #bdb7ad;
+    background: #171614;
+    font: 600 12px/1 system-ui, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .terminal-toolbar button:active,
+  .terminal-toolbar button.active {
+    border-color: #e68e0d;
+    color: #f5aa3e;
+    background: #2a1d0c;
+  }
+
+  .terminal-toolbar button:disabled {
+    opacity: 0.45;
+  }
+}

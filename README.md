@@ -1,0 +1,154 @@
+# Pickle
+
+Pickle puts a real tmux terminal in your browser. It is meant for reaching a
+Linux development machine from a laptop, iPad, or phone without turning the
+browser into an IDE.
+
+```text
+Browser -> xterm.js -> WebSocket -> Go -> PTY -> tmux
+```
+
+Your shell, Neovim, Codex, and other terminal tools keep running on the host.
+tmux keeps the session alive when the browser closes or the connection drops.
+Pickle also remembers which tmux session its client was viewing and returns to
+it after reconnecting.
+
+Pickle is currently one terminal connected to one general-purpose tmux session
+named `pickle`. The UI is deliberately spare: a full-screen terminal and a
+small connection indicator.
+
+## What you need
+
+- Linux
+- Go 1.24 or newer
+- Node.js 22 or newer
+- pnpm
+- tmux
+- Tailscale, if you want private remote access
+
+## Run it locally
+
+Install the frontend packages once:
+
+```bash
+cd web
+pnpm install
+```
+
+Start the Go server from the repository root:
+
+```bash
+go run ./cmd/server
+```
+
+In another terminal, start Vite:
+
+```bash
+cd web
+pnpm dev
+```
+
+Open <http://127.0.0.1:5173>.
+
+Vite serves the frontend and proxies `/ws` to the Go server on
+`127.0.0.1:8080`. Connecting runs:
+
+```bash
+tmux new-session -A -s pickle
+```
+
+That creates the session once and attaches to it afterward. Closing the browser
+does not end the session.
+
+## Build one binary
+
+Build the frontend first, then compile Go:
+
+```bash
+cd web
+pnpm build
+cd ..
+go build -o pickle ./cmd/server
+```
+
+Run it:
+
+```bash
+./pickle
+```
+
+Open <http://127.0.0.1:8080>. The React frontend is embedded in the binary.
+
+After a Go-only rebuild and server restart, an open browser or home-screen app
+reconnects on its own. Reload the page when the frontend changes; fully closing
+and reopening the iOS app is one way to do that.
+
+Pickle listens on localhost by default. The address can be changed with
+`-addr`, but a private reverse proxy is the preferred way to reach it remotely.
+
+## Reach it through Tailscale
+
+Keep Pickle running on `127.0.0.1:8080`, then open another terminal and run:
+
+```bash
+tailscale serve --bg 8080
+```
+
+Tailscale prints a private HTTPS address for the machine. Open that address on
+any device connected to the same tailnet. HTTP and WebSocket traffic are both
+proxied to Pickle.
+
+Check the active mapping with:
+
+```bash
+tailscale serve status
+```
+
+Remove Pickle from the default HTTPS port with:
+
+```bash
+tailscale serve --https=443 off
+```
+
+The Serve configuration runs in the background, but the Pickle process still
+needs to be running. Process supervision and install packaging will come after
+the basic workflow settles.
+
+## Install it on a device
+
+Open the private Tailscale HTTPS address in Safari on an iPhone or iPad, use the
+Share menu, and choose **Add to Home Screen**. On a laptop, use the browser's
+install action when it is available.
+
+Pickle opens as a standalone app with its own icon. It still needs a live
+connection to the host because the terminal itself cannot work offline.
+
+## Security
+
+Pickle gives the browser an interactive shell on the host. Treat access to it
+like SSH access.
+
+There is no application login yet. The current security boundary is:
+
+- Pickle listens only on localhost.
+- Tailscale Serve provides private HTTPS access.
+- Tailnet policy controls which users and devices can connect.
+- The service is not exposed through Tailscale Funnel or a public port.
+
+Do not expose Pickle directly to the public internet. Public temporary access
+needs a separate, carefully designed authentication flow.
+
+## Current scope
+
+The current build supports terminal input and output, ANSI applications, tmux,
+Neovim, Codex, resizing, reconnecting to the same tmux session, and installation
+as a PWA from a browser. Touch devices also get a compact toolbar for Esc, Ctrl,
+Tab, `Ctrl-b`, `Ctrl-f`, and arrow keys, plus touch scrolling in terminal
+scrollback and full-screen terminal apps.
+
+Project discovery, session selection, development-server links, container
+status, clipboard helpers, and public authentication are later work.
+
+## License
+
+[MIT](LICENSE)
