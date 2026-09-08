@@ -105,10 +105,14 @@ func New(projectsDir string) http.Handler {
 	if err != nil {
 		panic(err)
 	}
-	mux.HandleFunc("/tmux/", func(w http.ResponseWriter, _ *http.Request) {
+	serveIndex := func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		_, _ = w.Write(index)
-	})
+	}
+	mux.HandleFunc("/tmux/", serveIndex)
+	mux.HandleFunc("/projects", serveIndex)
+	mux.HandleFunc("/services", serveIndex)
+	mux.HandleFunc("/sessions", serveIndex)
 	mux.Handle("/", http.FileServer(http.FS(dist)))
 
 	return mux

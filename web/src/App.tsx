@@ -1,4 +1,4 @@
-import { Dashboard } from "./Dashboard";
+import { Dashboard, type DashboardView } from "./Dashboard";
 import { TerminalView } from "./Terminal";
 
 function sessionFromPath() {
@@ -21,17 +21,23 @@ function sessionFromPath() {
 
 export function App() {
   const session = sessionFromPath();
-  if (!session) {
-    return <Dashboard />;
+  if (session) {
+    return (
+      <main className="app">
+        <header className="terminal-topbar">
+          <a href="/sessions">‹ sessions</a>
+          <span>{session}</span>
+        </header>
+        <TerminalView session={session} />
+      </main>
+    );
   }
 
-  return (
-    <main className="app">
-      <header className="terminal-topbar">
-        <a href="/">‹ sessions</a>
-        <span>{session}</span>
-      </header>
-      <TerminalView session={session} />
-    </main>
-  );
+  const dashboardRoutes: Record<string, DashboardView> = {
+    "/": "overview",
+    "/services": "services",
+    "/sessions": "sessions",
+    "/projects": "projects",
+  };
+  return <Dashboard view={dashboardRoutes[window.location.pathname] ?? "overview"} />;
 }

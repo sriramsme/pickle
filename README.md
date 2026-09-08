@@ -126,8 +126,9 @@ connection to the host because the terminal itself cannot work offline.
 
 ## Tmux sessions
 
-The home page lists active tmux sessions, window counts, attached clients, and
-recent activity. Selecting one opens it at:
+The home page previews active tmux sessions. The full list lives at `/sessions`
+and shows window counts, attached clients, and recent activity. Selecting one
+opens it at:
 
 ```text
 /tmux/<session-name>
@@ -138,10 +139,11 @@ happens through tmux and the user's existing shell workflow.
 
 ## Projects
 
-Pickle lists the direct child directories under `~/projects`. Selecting a
-project opens its matching tmux session or creates one in that project
-directory. For consistency with common tmux-sessionizer scripts, periods become
-underscores in tmux session names.
+The home page previews projects, with the full list at `/projects`. Pickle lists
+the direct child directories under `~/projects`. Selecting a project opens its
+matching tmux session or creates one in that project directory. For consistency
+with common tmux-sessionizer scripts, periods become underscores in tmux session
+names.
 
 Use a different projects directory with:
 
@@ -151,7 +153,8 @@ go run ./cmd/server -projects-dir /path/to/projects
 
 ## Development services
 
-The dashboard lists TCP listeners owned by processes running inside discovered
+Services appear first on the home page, with the full list at `/services`.
+Pickle lists TCP listeners owned by processes running inside discovered
 projects. Each row shows the project, process name, and port. Pickle reads this
 from Linux `/proc`, so unrelated host services remain out of the list.
 
