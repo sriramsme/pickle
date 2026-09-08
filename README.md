@@ -158,12 +158,32 @@ go run ./cmd/server -projects-dir /path/to/projects
 ## Development services
 
 Services appear first on the home page, with the full list at `/services`.
-Pickle lists TCP listeners owned by processes running inside discovered
-projects. Each row shows the project, process name, and port. Pickle reads this
-from Linux `/proc`, so unrelated host services remain out of the list.
+Pickle finds TCP listeners owned by processes running inside discovered
+projects and containers started by Docker Compose projects in those
+directories. Docker services include their state, health, image, and published
+ports. Select any service to see its details.
 
-Service discovery is read-only. The listed ports are not automatically exposed
-through Tailscale yet.
+Pickle probes published TCP ports over loopback to identify likely HTTP apps.
+HTTP services can be exposed to the tailnet with Tailscale Serve, opened from
+their service sheet, and removed from Serve again. Give your user one-time
+permission to update Serve rules:
+
+```bash
+sudo tailscale set --operator=$USER
+```
+
+Vite-based apps may reject the tailnet hostname with a 403 response. Allow this
+machine's exact Tailscale hostname when starting the dev server:
+
+```bash
+export __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS="$(
+  tailscale status --json | jq -r '.Self.DNSName | rtrimstr(".")'
+)"
+pnpm dev
+```
+
+Ending a service sends `SIGTERM` to a host process or runs `docker stop` for a
+container. Pickle asks for confirmation before either action.
 
 ## Security
 
@@ -188,7 +208,8 @@ as a PWA from a browser. Touch devices also get a compact toolbar for Esc, Ctrl,
 Tab, `Ctrl-b`, `Ctrl-f`, and arrow keys, plus touch scrolling in terminal
 scrollback and full-screen terminal apps. The home page discovers existing tmux
 sessions, discovers local projects, and opens both in session-specific
-terminals. It also shows development services running inside those projects.
+terminals. It also shows host processes and Docker Compose services associated
+with those projects.
 
 Development-server links, session controls, container status, clipboard helpers,
 and public authentication are later work.

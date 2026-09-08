@@ -50,12 +50,15 @@ export function ServicesSection({
   services,
   failed,
   preview,
+  selectService,
 }: {
   services?: Service[];
   failed: boolean;
   preview: boolean;
+  selectService: (id: string) => void;
 }) {
   const visibleServices = preview ? services?.slice(0, previewLimit) : services;
+  const projectGroups = preview ? [] : groupServicesByProject(visibleServices);
 
   return (
     <section className="[&+&]:mt-[42px]">
@@ -65,24 +68,89 @@ export function ServicesSection({
       <div className="border-t border-border">
         {failed && services === undefined && <Message>Unable to load services</Message>}
         {!failed && services === undefined && <Message>Loading</Message>}
-        {visibleServices?.map((service) => (
-          <div
-            className="grid min-h-14 grid-cols-[minmax(140px,1fr)_auto_auto] items-center gap-[18px] px-1 py-[11px] max-[620px]:grid-cols-[minmax(0,1fr)_auto] max-[620px]:gap-2.5"
-            key={`${service.project}:${service.process}:${service.port}`}
-          >
-            <span className={nameClass}>{service.project}</span>
-            <span className={`${metaClass} max-[620px]:col-start-1 max-[620px]:pl-[15px]`}>
-              {service.process}
-            </span>
-            <span className="font-mono text-xs text-accent/80 max-[620px]:col-start-2 max-[620px]:row-span-2 max-[620px]:row-start-1">
-              :{service.port}
-            </span>
-          </div>
-        ))}
+        {preview &&
+          visibleServices?.map((service) => (
+            <ServiceRow
+              key={service.id}
+              service={service}
+              showProject
+              selectService={selectService}
+            />
+          ))}
+        {!preview &&
+          projectGroups.map(([project, projectServices]) => (
+            <div className="pt-5 first:pt-3" key={project}>
+              <div className="flex items-baseline gap-2 px-1 pb-1.5">
+                <h3 className="m-0 font-mono text-xs font-medium text-foreground-subtle">
+                  {project}
+                </h3>
+                <span className="text-[11px] text-muted">{projectServices.length}</span>
+              </div>
+              {projectServices.map((service) => (
+                <ServiceRow
+                  key={service.id}
+                  service={service}
+                  selectService={selectService}
+                />
+              ))}
+            </div>
+          ))}
         {services?.length === 0 && <Message>No project services</Message>}
       </div>
     </section>
   );
+}
+
+function ServiceRow({
+  service,
+  showProject = false,
+  selectService,
+}: {
+  service: Service;
+  showProject?: boolean;
+  selectService: (id: string) => void;
+}) {
+  const port = service.ports.find((candidate) => candidate.host !== undefined);
+  const status = service.health ?? service.state;
+  const unhealthy = service.health === "unhealthy" || service.state === "exited";
+
+  return (
+    <button
+      className={`${interactiveRowClass} w-full cursor-pointer grid-cols-[minmax(140px,1fr)_auto_auto_14px] border-0 bg-transparent text-left font-sans max-[620px]:grid-cols-[minmax(0,1fr)_auto_14px] max-[620px]:gap-2.5`}
+      onClick={() => selectService(service.id)}
+      type="button"
+    >
+      <span className={nameClass}>
+        <span
+          className={`h-1.5 w-1.5 shrink-0 rounded-full ${unhealthy ? "bg-danger" : "bg-accent"}`}
+          aria-hidden="true"
+        />
+        {showProject ? service.project : service.name}
+      </span>
+      <span className={`${metaClass} max-[620px]:col-start-1 max-[620px]:pl-[15px]`}>
+        {showProject ? `${service.name} · ${service.runtime}` : service.runtime}
+      </span>
+      <span className="font-mono text-xs text-accent/80 max-[620px]:col-start-2 max-[620px]:row-span-2 max-[620px]:row-start-1">
+        {port?.host ? `:${port.host}` : status}
+      </span>
+      <span
+        className="text-lg text-muted max-[620px]:col-start-3 max-[620px]:row-span-2 max-[620px]:row-start-1"
+        aria-hidden="true"
+      >
+        ›
+      </span>
+    </button>
+  );
+}
+
+function groupServicesByProject(services?: Service[]) {
+  const groups = new Map<string, Service[]>();
+  for (const service of services ?? []) {
+    const group = groups.get(service.project) ?? [];
+    group.push(service);
+    groups.set(service.project, group);
+  }
+  return [...groups.entries()];
 }
 
 export function SessionsSection({

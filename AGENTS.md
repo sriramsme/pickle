@@ -207,6 +207,9 @@ The working foundation includes:
 - project discovery under a configurable directory
 - one-tap project session creation using tmux-sessionizer naming
 - read-only discovery of project-owned TCP listeners through Linux `/proc`
+- read-only discovery of project-owned Docker Compose containers
+- service details with runtime, health, image, ports, and HTTP detection
+- Tailscale Serve controls for HTTP services and confirmed service termination
 - compact home previews with full lists at `/services`, `/sessions`, and `/projects`
 - a default persistent `pickle` tmux session
 - resize propagation

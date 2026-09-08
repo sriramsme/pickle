@@ -14,10 +14,27 @@ export type Project = {
 };
 
 export type Service = {
+  id: string;
   project: string;
-  process: string;
-  port: number;
+  name: string;
+  runtime: "process" | "docker";
+  state?: string;
+  health?: string;
+  image?: string;
+  container?: string;
+  ports: ServicePort[];
 };
+
+export type ServicePort = {
+  host?: number;
+  container?: number;
+  protocol: string;
+  scheme?: string;
+  exposedUrl?: string;
+  exposedPort?: number;
+};
+
+export type ServiceAction = "expose" | "unexpose" | "end";
 
 const refreshInterval = 5_000;
 
@@ -44,5 +61,21 @@ export function openProject(name: string) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name }),
+  });
+}
+
+export function runServiceAction({
+  id,
+  action,
+  port,
+}: {
+  id: string;
+  action: ServiceAction;
+  port?: number;
+}) {
+  return requestJSON<{ ok: true }>("/api/services", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, action, port }),
   });
 }

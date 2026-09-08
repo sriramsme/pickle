@@ -82,19 +82,40 @@ func New(projectsDir string) http.Handler {
 		}
 	})
 	mux.HandleFunc("/api/services", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			w.Header().Set("Allow", http.MethodGet)
+		switch r.Method {
+		case http.MethodGet:
+			serviceList, err := services.List(r.Context(), projectsDir)
+			if err != nil {
+				log.Printf("list services: %v", err)
+				http.Error(w, "failed to list services", http.StatusInternalServerError)
+				return
+			}
+			writeJSON(w, serviceList)
+		case http.MethodPost:
+			var request services.ActionRequest
+			r.Body = http.MaxBytesReader(w, r.Body, 4<<10)
+			if err := json.NewDecoder(r.Body).Decode(&request); err != nil || request.ID == "" {
+				http.Error(w, "invalid service action", http.StatusBadRequest)
+				return
+			}
+			if err := services.Act(r.Context(), projectsDir, request); err != nil {
+				if errors.Is(err, services.ErrServiceNotFound) {
+					http.Error(w, err.Error(), http.StatusNotFound)
+					return
+				}
+				if errors.Is(err, services.ErrInvalidAction) {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+				log.Printf("service action: %v", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			writeJSON(w, map[string]bool{"ok": true})
+		default:
+			w.Header().Set("Allow", "GET, POST")
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-			return
 		}
-
-		serviceList, err := services.List(projectsDir)
-		if err != nil {
-			log.Printf("list services: %v", err)
-			http.Error(w, "failed to list services", http.StatusInternalServerError)
-			return
-		}
-		writeJSON(w, serviceList)
 	})
 
 	dist, err := fs.Sub(webassets.Dist, "dist")
