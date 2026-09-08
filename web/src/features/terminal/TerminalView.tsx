@@ -1,5 +1,6 @@
 import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
+import "@xterm/xterm/css/xterm.css";
 import { useEffect, useRef, useState } from "react";
 
 type ConnectionStatus = "connecting" | "connected" | "disconnected";
@@ -7,6 +8,13 @@ type ConnectionStatus = "connecting" | "connected" | "disconnected";
 const reconnectDelay = 1_000;
 const touchScrollSensitivity = 2;
 const textEncoder = new TextEncoder();
+const toolbarButtonClass =
+  "h-[38px] min-w-[42px] shrink-0 touch-manipulation rounded-md border border-border bg-surface px-2.5 font-sans text-xs font-semibold text-foreground-subtle [-webkit-tap-highlight-color:transparent] active:border-accent active:bg-accent-subtle active:text-accent disabled:opacity-[0.45]";
+const statusDotClass: Record<ConnectionStatus, string> = {
+  connected: "bg-accent",
+  connecting: "bg-accent/70",
+  disconnected: "bg-muted",
+};
 
 type ToolbarKey = {
   label: string;
@@ -278,14 +286,20 @@ export function TerminalView({ session }: { session: string }) {
 
   return (
     <>
-      <div className={`connection-status ${status}`} aria-live="polite">
-        <span aria-hidden="true" />
+      <div
+        className="pointer-events-none absolute top-[max(12px,env(safe-area-inset-top))] right-[max(16px,env(safe-area-inset-right))] z-10 flex items-center gap-1.5 rounded-full border border-border bg-surface/85 px-[7px] py-1 text-[11px] leading-none text-muted-foreground"
+        aria-live="polite"
+      >
+        <span className={`h-1.5 w-1.5 rounded-full ${statusDotClass[status]}`} aria-hidden="true" />
         {status}
       </div>
-      <div className="terminal" ref={containerRef} aria-label="Pickle terminal" />
-      <nav className="terminal-toolbar" aria-label="Terminal keys">
+      <div className="terminal min-h-0 w-full flex-1" ref={containerRef} aria-label="Pickle terminal" />
+      <nav
+        className="terminal-toolbar hidden shrink-0 gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        aria-label="Terminal keys"
+      >
         <button
-          className={ctrlArmed ? "active" : undefined}
+          className={`${toolbarButtonClass} ${ctrlArmed ? "border-accent bg-accent-subtle text-accent" : ""}`}
           type="button"
           aria-pressed={ctrlArmed}
           disabled={status !== "connected"}
@@ -296,6 +310,7 @@ export function TerminalView({ session }: { session: string }) {
         </button>
         {toolbarKeys.map((key) => (
           <button
+            className={toolbarButtonClass}
             key={key.label}
             type="button"
             aria-label={key.ariaLabel ?? key.label}

@@ -33,9 +33,10 @@ Go server on localhost
        tmux
 ```
 
-The frontend uses React, TypeScript, Vite, and `@xterm/xterm`. The backend uses
-Go, `net/http`, a WebSocket connection, and a Unix PTY. A production build
-embeds the frontend in the Go binary.
+The frontend uses React, TypeScript, Vite, TanStack Router, TanStack Query,
+Tailwind CSS, and `@xterm/xterm`. The backend uses Go, `net/http`, a WebSocket
+connection, and a Unix PTY. A production build embeds the frontend in the Go
+binary.
 
 During development, Vite and Go run separately. Vite proxies `/ws` to the Go
 server.
@@ -127,12 +128,16 @@ The terminal should occupy almost the entire viewport.
 - Dark background
 - Orange accent near `#e68e0d`
 - Very little chrome
-- Plain CSS
+- Tailwind utilities backed by a small set of semantic theme tokens
 - Strict TypeScript
 - Functional React components
 - No global state library without a demonstrated need
 - Keep the xterm.js lifecycle in one focused component or hook
 - Do not add subtitles or helper copy that repeats a clear label
+
+Use TanStack Router for routes and TanStack Query for server data. Keep
+feature-specific components and API definitions together. Leave xterm rules,
+touch behavior, and other selectors that depend on third-party markup in CSS.
 
 The UI should feel calm and purpose-built. Avoid dashboard cards, generic SaaS
 styling, or browser-IDE furniture.

@@ -8,6 +8,10 @@ browser into an IDE.
 Browser -> xterm.js -> WebSocket -> Go -> PTY -> tmux
 ```
 
+The web app uses TanStack Router for its pages, TanStack Query for live server
+data, and Tailwind CSS for a small set of shared visual tokens and utilities.
+Terminal connection state remains local to the terminal component.
+
 Your shell, Neovim, Codex, and other terminal tools keep running on the host.
 tmux keeps the session alive when the browser closes or the connection drops.
 Pickle also remembers which tmux session its client was viewing and returns to
