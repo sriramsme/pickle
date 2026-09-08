@@ -29,12 +29,13 @@ const toolbarKeys: ToolbarKey[] = [
   { label: "→", value: "\x1b[C", ariaLabel: "Right arrow" },
 ];
 
-function websocketURL() {
+function websocketURL(session?: string) {
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  return `${protocol}//${window.location.host}/ws`;
+  const query = session ? `?session=${encodeURIComponent(session)}` : "";
+  return `${protocol}//${window.location.host}/ws${query}`;
 }
 
-export function TerminalView() {
+export function TerminalView({ session }: { session: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sendInputRef = useRef<(data: string) => void>(() => undefined);
   const ctrlArmedRef = useRef(false);
@@ -80,6 +81,7 @@ export function TerminalView() {
     let touchY = 0;
     let touchDeltaY = 0;
     let touchScrollFrame = 0;
+    let hasConnected = false;
     let disposed = false;
 
     const sendInput = (data: string) => {
@@ -135,7 +137,7 @@ export function TerminalView() {
 
       window.clearTimeout(reconnectTimer);
       setStatus("connecting");
-      const nextSocket = new WebSocket(websocketURL());
+      const nextSocket = new WebSocket(websocketURL(hasConnected ? undefined : session));
       socket = nextSocket;
       nextSocket.binaryType = "arraybuffer";
 
@@ -143,6 +145,7 @@ export function TerminalView() {
         if (disposed) {
           return;
         }
+        hasConnected = true;
         setStatus("connected");
         scheduleFit();
         terminal.focus();
@@ -271,7 +274,7 @@ export function TerminalView() {
       socket?.close();
       terminal.dispose();
     };
-  }, []);
+  }, [session]);
 
   return (
     <>

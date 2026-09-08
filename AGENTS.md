@@ -198,7 +198,8 @@ The working foundation includes:
 - one embedded frontend
 - one terminal WebSocket
 - one PTY per browser connection
-- one persistent `pickle` tmux session
+- tmux session discovery and selected-session attachment
+- a default persistent `pickle` tmux session
 - resize propagation
 - simple reconnect behavior
 - a minimal responsive terminal page
@@ -210,8 +211,8 @@ Near-term work should make this comfortable as a PWA on laptops, iPhones, and
 iPads. Keep testing viewport behavior, hardware keyboard behavior, and the touch
 toolbar against real terminal workflows.
 
-Only after the terminal experience is solid should Pickle grow into a broader
-control plane. Possible later work includes tmux session discovery, project
+The first control-plane slice lists existing tmux sessions and opens them at
+`/tmux/<session>`. Possible later work includes session controls, project
 discovery, agent status, development server links, container status, logs, host
 status, and multiple hosts.
 

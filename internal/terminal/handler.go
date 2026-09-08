@@ -15,6 +15,7 @@ import (
 
 	"github.com/coder/websocket"
 	"github.com/creack/pty"
+	"github.com/sriramsme/pickle/internal/tmux"
 )
 
 const (
@@ -24,8 +25,9 @@ const (
 )
 
 type Handler struct {
-	mu      sync.RWMutex
-	session string
+	mu             sync.RWMutex
+	defaultSession string
+	session        string
 }
 
 type resizeMessage struct {
@@ -35,6 +37,7 @@ type resizeMessage struct {
 }
 
 func New(session string) *Handler {
+	defaultSession := session
 	if rememberedSession, err := exec.Command(
 		"tmux", "show-option", "-gqv", lastSessionKey,
 	).Output(); err == nil {
@@ -42,17 +45,32 @@ func New(session string) *Handler {
 			session = rememberedSession
 		}
 	}
-	return &Handler{session: session}
+	return &Handler{defaultSession: defaultSession, session: session}
 }
 
 func (h *Handler) Serve(w http.ResponseWriter, r *http.Request) error {
+	session := r.URL.Query().Get("session")
+	if session == "" {
+		session = h.sessionName()
+	} else {
+		exists, err := tmux.SessionExists(r.Context(), session)
+		if err != nil {
+			http.Error(w, "failed to inspect tmux sessions", http.StatusInternalServerError)
+			return err
+		}
+		if !exists && session != h.defaultSession {
+			http.Error(w, "tmux session not found", http.StatusNotFound)
+			return nil
+		}
+	}
+
 	conn, err := websocket.Accept(w, r, nil)
 	if err != nil {
 		return fmt.Errorf("accept websocket: %w", err)
 	}
 	defer conn.CloseNow()
 
-	cmd := exec.Command("tmux", "new-session", "-A", "-s", h.sessionName())
+	cmd := exec.Command("tmux", "new-session", "-A", "-s", session)
 	cmd.Env = append(os.Environ(), "TERM=xterm-256color", "COLORTERM=truecolor")
 	ptmx, err := pty.StartWithSize(cmd, &pty.Winsize{
 		Cols: defaultColumns,
@@ -62,6 +80,7 @@ func (h *Handler) Serve(w http.ResponseWriter, r *http.Request) error {
 		_ = conn.Close(websocket.StatusInternalError, "failed to start tmux")
 		return fmt.Errorf("start tmux: %w", err)
 	}
+	h.setSession(session)
 
 	ctx, cancel := context.WithCancel(r.Context())
 	var output sync.WaitGroup
@@ -96,6 +115,12 @@ func (h *Handler) sessionName() string {
 	return h.session
 }
 
+func (h *Handler) setSession(session string) {
+	h.mu.Lock()
+	h.session = session
+	h.mu.Unlock()
+}
+
 func (h *Handler) rememberClientSession(pid int) {
 	output, err := exec.Command(
 		"tmux", "list-clients", "-F", "#{client_pid}\t#{session_name}",
@@ -109,9 +134,7 @@ func (h *Handler) rememberClientSession(pid int) {
 		return
 	}
 
-	h.mu.Lock()
-	h.session = session
-	h.mu.Unlock()
+	h.setSession(session)
 	_ = exec.Command("tmux", "set-option", "-gq", lastSessionKey, session).Run()
 }
 

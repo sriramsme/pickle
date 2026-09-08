@@ -13,9 +13,9 @@ tmux keeps the session alive when the browser closes or the connection drops.
 Pickle also remembers which tmux session its client was viewing and returns to
 it after reconnecting.
 
-Pickle is currently one terminal connected to one general-purpose tmux session
-named `pickle`. The UI is deliberately spare: a full-screen terminal and a
-small connection indicator.
+Pickle lists the tmux sessions already running on the host and opens one as a
+full-screen browser terminal. If tmux has no sessions yet, it can start the
+general-purpose `pickle` session.
 
 ## What you need
 
@@ -50,7 +50,7 @@ pnpm dev
 
 Open <http://127.0.0.1:5173>.
 
-Vite serves the frontend and proxies `/ws` to the Go server on
+Vite serves the frontend and proxies `/api` and `/ws` to the Go server on
 `127.0.0.1:8080`. Connecting runs:
 
 ```bash
@@ -123,6 +123,18 @@ install action when it is available.
 Pickle opens as a standalone app with its own icon. It still needs a live
 connection to the host because the terminal itself cannot work offline.
 
+## Tmux sessions
+
+The home page lists active tmux sessions, window counts, attached clients, and
+recent activity. Selecting one opens it at:
+
+```text
+/tmux/<session-name>
+```
+
+The list is read-only for now. Creating, renaming, and deleting sessions still
+happens through tmux and the user's existing shell workflow.
+
 ## Security
 
 Pickle gives the browser an interactive shell on the host. Treat access to it
@@ -144,10 +156,11 @@ The current build supports terminal input and output, ANSI applications, tmux,
 Neovim, Codex, resizing, reconnecting to the same tmux session, and installation
 as a PWA from a browser. Touch devices also get a compact toolbar for Esc, Ctrl,
 Tab, `Ctrl-b`, `Ctrl-f`, and arrow keys, plus touch scrolling in terminal
-scrollback and full-screen terminal apps.
+scrollback and full-screen terminal apps. The home page discovers existing tmux
+sessions and opens them at session-specific URLs.
 
-Project discovery, session selection, development-server links, container
-status, clipboard helpers, and public authentication are later work.
+Project discovery, session controls, development-server links, container status,
+clipboard helpers, and public authentication are later work.
 
 ## License
 
