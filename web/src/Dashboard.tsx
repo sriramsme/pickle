@@ -12,6 +12,12 @@ type Project = {
   session: string;
 };
 
+type Service = {
+  project: string;
+  process: string;
+  port: number;
+};
+
 function sessionURL(name: string) {
   return `/tmux/${encodeURIComponent(name)}`;
 }
@@ -30,6 +36,8 @@ export function Dashboard() {
   const [sessionsFailed, setSessionsFailed] = useState(false);
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [projectsFailed, setProjectsFailed] = useState(false);
+  const [services, setServices] = useState<Service[] | null>(null);
+  const [servicesFailed, setServicesFailed] = useState(false);
   const [openingProject, setOpeningProject] = useState<string | null>(null);
   const [openFailed, setOpenFailed] = useState(false);
 
@@ -72,11 +80,31 @@ export function Dashboard() {
       }
     };
 
+    const loadServices = async () => {
+      try {
+        const response = await fetch("/api/services", { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`service request failed: ${response.status}`);
+        }
+        const nextServices = (await response.json()) as Service[];
+        if (active) {
+          setServices(nextServices);
+          setServicesFailed(false);
+        }
+      } catch {
+        if (active) {
+          setServicesFailed(true);
+        }
+      }
+    };
+
     void loadSessions();
     void loadProjects();
+    void loadServices();
     const refreshTimer = window.setInterval(() => {
       void loadSessions();
       void loadProjects();
+      void loadServices();
     }, 5_000);
     return () => {
       active = false;
@@ -185,6 +213,33 @@ export function Dashboard() {
             ))}
             {projects?.length === 0 && <div className="session-message">No projects</div>}
             {openFailed && <div className="session-message error">Unable to open project</div>}
+          </div>
+        </section>
+
+        <section className="service-section">
+          <div className="session-heading">
+            <h2>services</h2>
+            {services && <span>{services.length}</span>}
+          </div>
+
+          <div className="session-list">
+            {servicesFailed && services === null && (
+              <div className="session-message">Unable to load services</div>
+            )}
+            {!servicesFailed && services === null && <div className="session-message">Loading</div>}
+            {services?.map((service) => (
+              <div
+                className="service-row"
+                key={`${service.project}:${service.process}:${service.port}`}
+              >
+                <span className="session-name">{service.project}</span>
+                <span className="session-meta">{service.process}</span>
+                <span className="service-port">:{service.port}</span>
+              </div>
+            ))}
+            {services?.length === 0 && (
+              <div className="session-message">No project services</div>
+            )}
           </div>
         </section>
       </div>

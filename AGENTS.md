@@ -201,6 +201,7 @@ The working foundation includes:
 - tmux session discovery and selected-session attachment
 - project discovery under a configurable directory
 - one-tap project session creation using tmux-sessionizer naming
+- read-only discovery of project-owned TCP listeners through Linux `/proc`
 - a default persistent `pickle` tmux session
 - resize propagation
 - simple reconnect behavior

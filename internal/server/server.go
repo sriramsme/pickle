@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/sriramsme/pickle/internal/projects"
+	"github.com/sriramsme/pickle/internal/services"
 	"github.com/sriramsme/pickle/internal/terminal"
 	tmuxctl "github.com/sriramsme/pickle/internal/tmux"
 	webassets "github.com/sriramsme/pickle/web"
@@ -79,6 +80,21 @@ func New(projectsDir string) http.Handler {
 			w.Header().Set("Allow", "GET, POST")
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		}
+	})
+	mux.HandleFunc("/api/services", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.Header().Set("Allow", http.MethodGet)
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		serviceList, err := services.List(projectsDir)
+		if err != nil {
+			log.Printf("list services: %v", err)
+			http.Error(w, "failed to list services", http.StatusInternalServerError)
+			return
+		}
+		writeJSON(w, serviceList)
 	})
 
 	dist, err := fs.Sub(webassets.Dist, "dist")

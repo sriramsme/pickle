@@ -121,12 +121,15 @@ body {
 
 .dashboard {
   width: 100%;
+  height: 100%;
   min-height: 100dvh;
+  overflow-y: auto;
   padding: max(24px, env(safe-area-inset-top))
     max(20px, env(safe-area-inset-right))
     max(24px, env(safe-area-inset-bottom))
     max(20px, env(safe-area-inset-left));
   background: #0b0b0b;
+  -webkit-overflow-scrolling: touch;
 }
 
 .dashboard-shell {
@@ -245,7 +248,8 @@ body {
   grid-template-columns: minmax(140px, 1fr) auto 14px;
 }
 
-.project-section {
+.project-section,
+.service-section {
   margin-top: 42px;
 }
 
@@ -269,6 +273,22 @@ body {
 
 .session-message.error {
   color: #b97a61;
+}
+
+.service-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) auto auto;
+  align-items: center;
+  gap: 18px;
+  min-height: 58px;
+  padding: 11px 4px;
+  border-bottom: 1px solid #242321;
+}
+
+.service-port {
+  color: #b98a44;
+  font-family: "JetBrainsMono Nerd Font", monospace;
+  font-size: 12px;
 }
 
 @media (any-pointer: coarse), (hover: none) and (max-width: 1366px) {
@@ -350,5 +370,19 @@ body {
 
   .project-row {
     grid-template-columns: minmax(0, 1fr) auto 14px;
+  }
+
+  .service-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  .service-row .session-meta {
+    grid-column: 1;
+  }
+
+  .service-port {
+    grid-column: 2;
+    grid-row: 1 / span 2;
   }
 }

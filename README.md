@@ -149,6 +149,15 @@ Use a different projects directory with:
 go run ./cmd/server -projects-dir /path/to/projects
 ```
 
+## Development services
+
+The dashboard lists TCP listeners owned by processes running inside discovered
+projects. Each row shows the project, process name, and port. Pickle reads this
+from Linux `/proc`, so unrelated host services remain out of the list.
+
+Service discovery is read-only. The listed ports are not automatically exposed
+through Tailscale yet.
+
 ## Security
 
 Pickle gives the browser an interactive shell on the host. Treat access to it
@@ -172,9 +181,9 @@ as a PWA from a browser. Touch devices also get a compact toolbar for Esc, Ctrl,
 Tab, `Ctrl-b`, `Ctrl-f`, and arrow keys, plus touch scrolling in terminal
 scrollback and full-screen terminal apps. The home page discovers existing tmux
 sessions, discovers local projects, and opens both in session-specific
-terminals.
+terminals. It also shows development services running inside those projects.
 
-Session controls, development-server links, container status, clipboard helpers,
+Development-server links, session controls, container status, clipboard helpers,
 and public authentication are later work.
 
 ## License
