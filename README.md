@@ -15,7 +15,8 @@ it after reconnecting.
 
 Pickle lists the tmux sessions already running on the host and opens one as a
 full-screen browser terminal. If tmux has no sessions yet, it can start the
-general-purpose `pickle` session.
+general-purpose `pickle` session. It also lists projects and can start a tmux
+session in a project's directory.
 
 ## What you need
 
@@ -135,6 +136,19 @@ recent activity. Selecting one opens it at:
 The list is read-only for now. Creating, renaming, and deleting sessions still
 happens through tmux and the user's existing shell workflow.
 
+## Projects
+
+Pickle lists the direct child directories under `~/projects`. Selecting a
+project opens its matching tmux session or creates one in that project
+directory. For consistency with common tmux-sessionizer scripts, periods become
+underscores in tmux session names.
+
+Use a different projects directory with:
+
+```bash
+go run ./cmd/server -projects-dir /path/to/projects
+```
+
 ## Security
 
 Pickle gives the browser an interactive shell on the host. Treat access to it
@@ -157,10 +171,11 @@ Neovim, Codex, resizing, reconnecting to the same tmux session, and installation
 as a PWA from a browser. Touch devices also get a compact toolbar for Esc, Ctrl,
 Tab, `Ctrl-b`, `Ctrl-f`, and arrow keys, plus touch scrolling in terminal
 scrollback and full-screen terminal apps. The home page discovers existing tmux
-sessions and opens them at session-specific URLs.
+sessions, discovers local projects, and opens both in session-specific
+terminals.
 
-Project discovery, session controls, development-server links, container status,
-clipboard helpers, and public authentication are later work.
+Session controls, development-server links, container status, clipboard helpers,
+and public authentication are later work.
 
 ## License
 

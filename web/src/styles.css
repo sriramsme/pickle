@@ -245,6 +245,32 @@ body {
   grid-template-columns: minmax(140px, 1fr) auto 14px;
 }
 
+.project-section {
+  margin-top: 42px;
+}
+
+.project-row {
+  grid-template-columns: minmax(140px, 1fr) auto 14px;
+  width: 100%;
+  border-top: 0;
+  border-right: 0;
+  border-left: 0;
+  border-radius: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.project-row:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.session-message.error {
+  color: #b97a61;
+}
+
 @media (any-pointer: coarse), (hover: none) and (max-width: 1366px) {
   .terminal-toolbar {
     display: flex;
@@ -320,5 +346,9 @@ body {
 
   .session-row.empty .session-arrow {
     grid-column: 2;
+  }
+
+  .project-row {
+    grid-template-columns: minmax(0, 1fr) auto 14px;
   }
 }

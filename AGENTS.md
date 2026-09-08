@@ -199,6 +199,8 @@ The working foundation includes:
 - one terminal WebSocket
 - one PTY per browser connection
 - tmux session discovery and selected-session attachment
+- project discovery under a configurable directory
+- one-tap project session creation using tmux-sessionizer naming
 - a default persistent `pickle` tmux session
 - resize propagation
 - simple reconnect behavior
@@ -211,10 +213,10 @@ Near-term work should make this comfortable as a PWA on laptops, iPhones, and
 iPads. Keep testing viewport behavior, hardware keyboard behavior, and the touch
 toolbar against real terminal workflows.
 
-The first control-plane slice lists existing tmux sessions and opens them at
-`/tmux/<session>`. Possible later work includes session controls, project
-discovery, agent status, development server links, container status, logs, host
-status, and multiple hosts.
+The first control-plane slice lists existing tmux sessions and local projects.
+Projects open in a matching session at `/tmux/<session>`. Possible later work
+includes session controls, agent status, development server links, container
+status, logs, host status, and multiple hosts.
 
 Do not add a database, account system, OAuth framework, Docker requirement,
 Kubernetes, Redis, message queue, component library, or plugin architecture

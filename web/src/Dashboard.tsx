@@ -7,6 +7,11 @@ type TmuxSession = {
   lastActivity: string;
 };
 
+type Project = {
+  name: string;
+  session: string;
+};
+
 function sessionURL(name: string) {
   return `/tmux/${encodeURIComponent(name)}`;
 }
@@ -22,7 +27,11 @@ function formatActivity(value: string) {
 
 export function Dashboard() {
   const [sessions, setSessions] = useState<TmuxSession[] | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [sessionsFailed, setSessionsFailed] = useState(false);
+  const [projects, setProjects] = useState<Project[] | null>(null);
+  const [projectsFailed, setProjectsFailed] = useState(false);
+  const [openingProject, setOpeningProject] = useState<string | null>(null);
+  const [openFailed, setOpenFailed] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -36,22 +45,66 @@ export function Dashboard() {
         const nextSessions = (await response.json()) as TmuxSession[];
         if (active) {
           setSessions(nextSessions);
-          setFailed(false);
+          setSessionsFailed(false);
         }
       } catch {
         if (active) {
-          setFailed(true);
+          setSessionsFailed(true);
+        }
+      }
+    };
+
+    const loadProjects = async () => {
+      try {
+        const response = await fetch("/api/projects", { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`project request failed: ${response.status}`);
+        }
+        const nextProjects = (await response.json()) as Project[];
+        if (active) {
+          setProjects(nextProjects);
+          setProjectsFailed(false);
+        }
+      } catch {
+        if (active) {
+          setProjectsFailed(true);
         }
       }
     };
 
     void loadSessions();
-    const refreshTimer = window.setInterval(loadSessions, 5_000);
+    void loadProjects();
+    const refreshTimer = window.setInterval(() => {
+      void loadSessions();
+      void loadProjects();
+    }, 5_000);
     return () => {
       active = false;
       window.clearInterval(refreshTimer);
     };
   }, []);
+
+  const openProject = async (project: Project) => {
+    setOpeningProject(project.name);
+    setOpenFailed(false);
+    try {
+      const response = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: project.name }),
+      });
+      if (!response.ok) {
+        throw new Error(`open project failed: ${response.status}`);
+      }
+      const openedProject = (await response.json()) as Project;
+      window.location.assign(sessionURL(openedProject.session));
+    } catch {
+      setOpenFailed(true);
+      setOpeningProject(null);
+    }
+  };
+
+  const sessionNames = new Set(sessions?.map((session) => session.name));
 
   return (
     <main className="dashboard">
@@ -67,8 +120,10 @@ export function Dashboard() {
         </div>
 
         <div className="session-list">
-          {failed && sessions === null && <div className="session-message">Unable to load sessions</div>}
-          {!failed && sessions === null && <div className="session-message">Loading</div>}
+          {sessionsFailed && sessions === null && (
+            <div className="session-message">Unable to load sessions</div>
+          )}
+          {!sessionsFailed && sessions === null && <div className="session-message">Loading</div>}
           {sessions?.map((session) => (
             <a className="session-row" href={sessionURL(session.name)} key={session.name}>
               <span className="session-name">
@@ -95,6 +150,43 @@ export function Dashboard() {
             </a>
           )}
         </div>
+
+        <section className="project-section">
+          <div className="session-heading">
+            <h2>projects</h2>
+            {projects && <span>{projects.length}</span>}
+          </div>
+
+          <div className="session-list">
+            {projectsFailed && projects === null && (
+              <div className="session-message">Unable to load projects</div>
+            )}
+            {!projectsFailed && projects === null && <div className="session-message">Loading</div>}
+            {projects?.map((project) => (
+              <button
+                className="session-row project-row"
+                disabled={openingProject !== null}
+                key={project.name}
+                onClick={() => void openProject(project)}
+                type="button"
+              >
+                <span className="session-name">{project.name}</span>
+                <span className="session-meta">
+                  {openingProject === project.name
+                    ? "opening"
+                    : sessionNames.has(project.session)
+                      ? "open session"
+                      : "start session"}
+                </span>
+                <span className="session-arrow" aria-hidden="true">
+                  ›
+                </span>
+              </button>
+            ))}
+            {projects?.length === 0 && <div className="session-message">No projects</div>}
+            {openFailed && <div className="session-message error">Unable to open project</div>}
+          </div>
+        </section>
       </div>
     </main>
   );

@@ -63,6 +63,30 @@ func SessionExists(ctx context.Context, name string) (bool, error) {
 	return false, nil
 }
 
+func EnsureSession(ctx context.Context, name, directory string) error {
+	exists, err := SessionExists(ctx, name)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return nil
+	}
+
+	output, err := exec.CommandContext(
+		ctx, "tmux", "new-session", "-d", "-s", name, "-c", directory,
+	).CombinedOutput()
+	if err == nil {
+		return nil
+	}
+
+	// Another request may have created the session between the check and command.
+	exists, checkErr := SessionExists(ctx, name)
+	if checkErr == nil && exists {
+		return nil
+	}
+	return fmt.Errorf("create tmux session: %w: %s", err, strings.TrimSpace(string(output)))
+}
+
 func parseSessions(output []byte) ([]Session, error) {
 	text := strings.TrimSpace(string(output))
 	if text == "" {
