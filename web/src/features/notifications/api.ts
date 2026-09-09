@@ -34,5 +34,13 @@ export function removeNotificationSubscription(endpoint: string) {
 export function sendTestNotification() {
   return requestJSON<{ sent: number }>("/api/notifications", {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: "Pickle",
+      body: "Notifications are working.",
+      url: "/settings",
+      tag: "pickle-test",
+      urgency: "normal",
+    }),
   });
 }

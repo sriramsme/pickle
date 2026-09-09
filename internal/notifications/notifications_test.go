@@ -33,7 +33,7 @@ func TestStorePersistsSubscriptions(t *testing.T) {
 	if err := reloaded.Unsubscribe(subscription.Endpoint); err != nil {
 		t.Fatalf("unsubscribe: %v", err)
 	}
-	if _, err := reloaded.Send(t.Context(), Notification{}); !errors.Is(err, ErrNoSubscriptions) {
+	if _, err := reloaded.Send(t.Context(), testNotification()); !errors.Is(err, ErrNoSubscriptions) {
 		t.Fatalf("unexpected send error: %v", err)
 	}
 
@@ -108,8 +108,16 @@ func TestStoreSendsEncryptedWebPushRequest(t *testing.T) {
 	if err := store.Subscribe(subscription); err != nil {
 		t.Fatalf("subscribe: %v", err)
 	}
-	if sent, err := store.Send(t.Context(), Notification{Title: "Pickle"}); err != nil || sent != 1 {
+	if sent, err := store.Send(t.Context(), testNotification()); err != nil || sent != 1 {
 		t.Fatalf("send notification: %v", err)
+	}
+}
+
+func TestValidateRejectsExternalNotificationURL(t *testing.T) {
+	notification := testNotification()
+	notification.URL = "https://example.com"
+	if err := Validate(notification); !errors.Is(err, ErrInvalidNotification) {
+		t.Fatalf("unexpected validation error: %v", err)
 	}
 }
 
@@ -120,5 +128,14 @@ func testSubscription(endpoint string) Subscription {
 			Auth:   "auth",
 			P256dh: "p256dh",
 		},
+	}
+}
+
+func testNotification() Notification {
+	return Notification{
+		Title:   "Pickle",
+		Body:    "Finished",
+		URL:     "/",
+		Urgency: UrgencyNormal,
 	}
 }

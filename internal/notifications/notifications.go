@@ -11,13 +11,32 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
 	webpush "github.com/SherClockHolmes/webpush-go"
 )
 
-var ErrNoSubscriptions = errors.New("no notification devices are enabled")
+var (
+	ErrInvalidNotification = errors.New("invalid notification")
+	ErrNoSubscriptions     = errors.New("no notification devices are enabled")
+)
+
+const (
+	MaxTitleBytes = 120
+	MaxBodyBytes  = 1000
+	MaxURLBytes   = 2048
+	MaxTagBytes   = 128
+)
+
+type Urgency string
+
+const (
+	UrgencyLow    Urgency = "low"
+	UrgencyNormal Urgency = "normal"
+	UrgencyHigh   Urgency = "high"
+)
 
 type Subscription struct {
 	Endpoint string `json:"endpoint"`
@@ -30,10 +49,11 @@ type Keys struct {
 }
 
 type Notification struct {
-	Title string `json:"title"`
-	Body  string `json:"body"`
-	URL   string `json:"url"`
-	Tag   string `json:"tag,omitempty"`
+	Title   string  `json:"title"`
+	Body    string  `json:"body"`
+	URL     string  `json:"url"`
+	Tag     string  `json:"tag,omitempty"`
+	Urgency Urgency `json:"-"`
 }
 
 type fileState struct {
@@ -144,6 +164,10 @@ func (s *Store) Unsubscribe(endpoint string) error {
 }
 
 func (s *Store) Send(ctx context.Context, notification Notification) (int, error) {
+	if err := Validate(notification); err != nil {
+		return 0, err
+	}
+
 	s.mu.RLock()
 	subscriptions := append([]Subscription(nil), s.state.Subscriptions...)
 	privateKey := s.state.VAPIDPrivateKey
@@ -161,7 +185,7 @@ func (s *Store) Send(ctx context.Context, notification Notification) (int, error
 	sent := 0
 	var sendErrors []error
 	for _, subscription := range subscriptions {
-		if err := s.send(ctx, subscription, payload, privateKey, publicKey); err != nil {
+		if err := s.send(ctx, subscription, payload, privateKey, publicKey, notification.Urgency); err != nil {
 			sendErrors = append(sendErrors, err)
 			continue
 		}
@@ -170,7 +194,13 @@ func (s *Store) Send(ctx context.Context, notification Notification) (int, error
 	return sent, errors.Join(sendErrors...)
 }
 
-func (s *Store) send(ctx context.Context, subscription Subscription, payload []byte, privateKey, publicKey string) error {
+func (s *Store) send(
+	ctx context.Context,
+	subscription Subscription,
+	payload []byte,
+	privateKey, publicKey string,
+	urgency Urgency,
+) error {
 	response, err := webpush.SendNotificationWithContext(ctx, payload, &webpush.Subscription{
 		Endpoint: subscription.Endpoint,
 		Keys: webpush.Keys{
@@ -183,7 +213,7 @@ func (s *Store) send(ctx context.Context, subscription Subscription, payload []b
 		VAPIDPrivateKey: privateKey,
 		VAPIDPublicKey:  publicKey,
 		TTL:             60,
-		Urgency:         webpush.UrgencyNormal,
+		Urgency:         webPushUrgency(urgency),
 	})
 	if err != nil {
 		return errors.New("push request failed")
@@ -198,6 +228,46 @@ func (s *Store) send(ctx context.Context, subscription Subscription, payload []b
 		return fmt.Errorf("push service returned %s", response.Status)
 	}
 	return nil
+}
+
+func Validate(notification Notification) error {
+	if strings.TrimSpace(notification.Title) == "" {
+		return fmt.Errorf("%w: title is required", ErrInvalidNotification)
+	}
+	if strings.TrimSpace(notification.Body) == "" {
+		return fmt.Errorf("%w: message is required", ErrInvalidNotification)
+	}
+	if len(notification.Title) > MaxTitleBytes {
+		return fmt.Errorf("%w: title is too long", ErrInvalidNotification)
+	}
+	if len(notification.Body) > MaxBodyBytes {
+		return fmt.Errorf("%w: message is too long", ErrInvalidNotification)
+	}
+	if len(notification.URL) > MaxURLBytes || !strings.HasPrefix(notification.URL, "/") || strings.HasPrefix(notification.URL, "//") {
+		return fmt.Errorf("%w: URL must be a local Pickle path", ErrInvalidNotification)
+	}
+	parsedURL, err := url.ParseRequestURI(notification.URL)
+	if err != nil || parsedURL.IsAbs() || parsedURL.Host != "" {
+		return fmt.Errorf("%w: URL must be a local Pickle path", ErrInvalidNotification)
+	}
+	if len(notification.Tag) > MaxTagBytes {
+		return fmt.Errorf("%w: tag is too long", ErrInvalidNotification)
+	}
+	if notification.Urgency != UrgencyLow && notification.Urgency != UrgencyNormal && notification.Urgency != UrgencyHigh {
+		return fmt.Errorf("%w: urgency must be low, normal, or high", ErrInvalidNotification)
+	}
+	return nil
+}
+
+func webPushUrgency(urgency Urgency) webpush.Urgency {
+	switch urgency {
+	case UrgencyLow:
+		return webpush.UrgencyLow
+	case UrgencyHigh:
+		return webpush.UrgencyHigh
+	default:
+		return webpush.UrgencyNormal
+	}
 }
 
 func (s *Store) saveSubscriptions(subscriptions []Subscription) error {

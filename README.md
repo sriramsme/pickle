@@ -64,6 +64,20 @@ Open the private Tailscale address in Safari on an iPhone or iPad, use the Share
 menu, and choose **Add to Home Screen**. Pickle opens as a standalone app and
 reconnects to the same tmux session when possible.
 
+## Notify from scripts and agents
+
+After enabling notifications in Pickle's Settings, any local script or coding
+agent can send a message through the running server:
+
+```bash
+pickle notify "Tests passed and the task is ready for review"
+pickle notify --title "Codex needs input" --url "/tmux/pickle" --urgency high \
+  "Waiting for your approval"
+```
+
+See [Notifications](docs/notifications.md) for every option and a ready-to-copy
+instruction for your root agent configuration.
+
 ## More
 
 - [Configuration](docs/configuration.md)

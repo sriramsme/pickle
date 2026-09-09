@@ -19,3 +19,59 @@ Pickle stores its VAPID keys and device subscriptions at:
 The file is created with permissions `0600`. Removing it creates a new identity
 for the Pickle server and invalidates existing device subscriptions. Turn
 notifications off and on again on each device after removing it.
+
+## Send from the command line
+
+`pickle notify` sends through the running Pickle server to every enabled device:
+
+```bash
+pickle notify "The task finished"
+pickle notify --title "Codex needs input" --url "/tmux/pickle" \
+  --tag "codex-pickle" --urgency high "Waiting for your approval"
+```
+
+Options include:
+
+- `--title` sets the notification title. The default is `Pickle`.
+- `--url` opens a local Pickle route when the notification is tapped.
+- `--tag` groups similar notifications on browsers that support it.
+- `--urgency` accepts `low`, `normal`, or `high`.
+- `--stdin` reads the message from standard input.
+- `--json` prints a machine-readable delivery result.
+- `--server` overrides the default `http://127.0.0.1:8080`. The
+  `PICKLE_URL` environment variable provides the same default override.
+- `--timeout` controls how long the command waits for delivery.
+
+The command exits with a failure status when Pickle is unreachable, no devices
+are enabled, the message is invalid, or delivery fails to every device.
+
+Notification action buttons are not currently used because browser support is
+inconsistent and Safari does not support them. Use `--url` to open the relevant
+Pickle screen and perform approvals with their full context visible.
+
+## Agent instruction
+
+Add this to a root `AGENTS.md` or the equivalent instruction file used by your
+coding agents:
+
+```md
+## Pickle notifications
+
+If the `pickle` command is available, send one concise notification when:
+
+- you finish a task that took long enough that I may have stepped away
+- you are blocked and need my input or approval
+- a long-running command fails and needs my attention
+
+Use:
+
+`pickle notify --title "<agent and project>" --tag "<stable task id>" --url "<relevant Pickle route>" "<outcome or exact input needed>"`
+
+Use `--urgency high` only when work cannot continue without me. Omit `--url`
+when there is no useful Pickle screen to open. Do not notify for routine
+progress, every tool call, or while I am actively responding. Never include
+secrets, tokens, source code, customer data, or other sensitive information
+because notifications may appear on a lock screen. If notification delivery
+fails, continue normally and mention it in your final response instead of
+retrying repeatedly.
+```

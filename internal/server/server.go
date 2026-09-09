@@ -39,6 +39,14 @@ type notificationEndpointRequest struct {
 	Endpoint string `json:"endpoint"`
 }
 
+type sendNotificationRequest struct {
+	Title   string `json:"title"`
+	Body    string `json:"body"`
+	URL     string `json:"url"`
+	Tag     string `json:"tag,omitempty"`
+	Urgency string `json:"urgency"`
+}
+
 func New(settings *config.Store, notificationStore notificationService) http.Handler {
 	terminalHandler := terminal.New("pickle")
 
@@ -163,23 +171,38 @@ func notificationHandler(service notificationService) http.Handler {
 			}
 			writeJSON(w, map[string]bool{"ok": true})
 		case http.MethodPost:
-			sent, err := service.Send(r.Context(), notifications.Notification{
-				Title: "Pickle",
-				Body:  "Notifications are working.",
-				URL:   "/settings",
-				Tag:   "pickle-test",
-			})
+			var request sendNotificationRequest
+			if err := decodeJSON(w, r, &request); err != nil {
+				http.Error(w, "invalid notification", http.StatusBadRequest)
+				return
+			}
+			notification := notifications.Notification{
+				Title:   request.Title,
+				Body:    request.Body,
+				URL:     request.URL,
+				Tag:     request.Tag,
+				Urgency: notifications.Urgency(request.Urgency),
+			}
+			if err := notifications.Validate(notification); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			sent, err := service.Send(r.Context(), notification)
+			if errors.Is(err, notifications.ErrInvalidNotification) {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
 			if errors.Is(err, notifications.ErrNoSubscriptions) {
 				http.Error(w, err.Error(), http.StatusNotFound)
 				return
 			}
 			if err != nil && sent == 0 {
-				log.Printf("send test notification: %v", err)
+				log.Printf("send notification: %v", err)
 				http.Error(w, "failed to send notification", http.StatusBadGateway)
 				return
 			}
 			if err != nil {
-				log.Printf("send some test notifications: %v", err)
+				log.Printf("send some notifications: %v", err)
 			}
 			writeJSON(w, map[string]int{"sent": sent})
 		default:

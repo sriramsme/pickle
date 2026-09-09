@@ -17,6 +17,7 @@ type fakeNotificationService struct {
 	publicKey    string
 	subscription notifications.Subscription
 	sentTo       string
+	notification notifications.Notification
 }
 
 func (f *fakeNotificationService) PublicKey() string {
@@ -35,8 +36,9 @@ func (f *fakeNotificationService) Unsubscribe(endpoint string) error {
 	return nil
 }
 
-func (f *fakeNotificationService) Send(_ context.Context, _ notifications.Notification) (int, error) {
+func (f *fakeNotificationService) Send(_ context.Context, notification notifications.Notification) (int, error) {
 	f.sentTo = "all"
+	f.notification = notification
 	return 1, nil
 }
 
@@ -99,13 +101,32 @@ func TestNotificationHandlerSubscribesAndSendsTest(t *testing.T) {
 		t.Fatalf("unexpected subscription response: %d, %+v", response.Code, service.subscription)
 	}
 
-	request = httptest.NewRequest(http.MethodPost, "/api/notifications", nil)
+	request = httptest.NewRequest(
+		http.MethodPost,
+		"/api/notifications",
+		strings.NewReader(`{"title":"Codex","body":"Finished","url":"/tmux/pickle","tag":"codex-pickle","urgency":"high"}`),
+	)
 	request.Header.Set("Origin", "http://example.com")
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 
-	if response.Code != http.StatusOK || service.sentTo != "all" {
+	if response.Code != http.StatusOK || service.sentTo != "all" || service.notification.Urgency != notifications.UrgencyHigh {
 		t.Fatalf("unexpected test response: %d, %q", response.Code, service.sentTo)
+	}
+}
+
+func TestNotificationHandlerRejectsExternalDestination(t *testing.T) {
+	request := httptest.NewRequest(
+		http.MethodPost,
+		"/api/notifications",
+		strings.NewReader(`{"title":"Pickle","body":"Finished","url":"https://example.com","urgency":"normal"}`),
+	)
+	response := httptest.NewRecorder()
+
+	notificationHandler(&fakeNotificationService{}).ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("unexpected status: %d", response.Code)
 	}
 }
 
