@@ -15,6 +15,7 @@ network drops.
 - Finds project development servers and Docker Compose services
 - Opens HTTP services privately through Tailscale Serve
 - Installs as a home-screen app on iPhone and iPad
+- Supports opt-in PWA notifications
 
 ## Supported setup
 
@@ -67,6 +68,7 @@ reconnects to the same tmux session when possible.
 
 - [Configuration](docs/configuration.md)
 - [Development services](docs/services.md)
+- [Notifications](docs/notifications.md)
 - [Local development](docs/development.md)
 - [Security](SECURITY.md)
 

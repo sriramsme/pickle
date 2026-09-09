@@ -1,13 +1,18 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"io/fs"
 	"log"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/sriramsme/pickle/internal/config"
+	"github.com/sriramsme/pickle/internal/notifications"
 	"github.com/sriramsme/pickle/internal/projects"
 	"github.com/sriramsme/pickle/internal/services"
 	"github.com/sriramsme/pickle/internal/terminal"
@@ -23,7 +28,18 @@ type updateSettingsRequest struct {
 	ProjectsDirectory string `json:"projectsDirectory"`
 }
 
-func New(settings *config.Store) http.Handler {
+type notificationService interface {
+	PublicKey() string
+	Subscribe(notifications.Subscription) error
+	Unsubscribe(string) error
+	Send(context.Context, notifications.Notification) (int, error)
+}
+
+type notificationEndpointRequest struct {
+	Endpoint string `json:"endpoint"`
+}
+
+func New(settings *config.Store, notificationStore notificationService) http.Handler {
 	terminalHandler := terminal.New("pickle")
 
 	mux := http.NewServeMux()
@@ -47,6 +63,7 @@ func New(settings *config.Store) http.Handler {
 		}
 		writeJSON(w, sessions)
 	})
+	mux.Handle("/api/notifications", notificationHandler(notificationStore))
 	mux.Handle("/api/settings", settingsHandler(settings))
 	mux.HandleFunc("/api/projects", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -110,6 +127,66 @@ func New(settings *config.Store) http.Handler {
 	mux.Handle("/", http.FileServer(http.FS(dist)))
 
 	return mux
+}
+
+func notificationHandler(service notificationService) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet && !sameOrigin(r) {
+			http.Error(w, "cross-origin request denied", http.StatusForbidden)
+			return
+		}
+
+		switch r.Method {
+		case http.MethodGet:
+			writeJSON(w, map[string]string{"publicKey": service.PublicKey()})
+		case http.MethodPut:
+			var subscription notifications.Subscription
+			if err := decodeJSON(w, r, &subscription); err != nil {
+				http.Error(w, "invalid notification subscription", http.StatusBadRequest)
+				return
+			}
+			if err := service.Subscribe(subscription); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			writeJSON(w, map[string]bool{"ok": true})
+		case http.MethodDelete:
+			var request notificationEndpointRequest
+			if err := decodeJSON(w, r, &request); err != nil || request.Endpoint == "" {
+				http.Error(w, "invalid notification subscription", http.StatusBadRequest)
+				return
+			}
+			if err := service.Unsubscribe(request.Endpoint); err != nil {
+				log.Printf("remove notification subscription: %v", err)
+				http.Error(w, "failed to disable notifications", http.StatusInternalServerError)
+				return
+			}
+			writeJSON(w, map[string]bool{"ok": true})
+		case http.MethodPost:
+			sent, err := service.Send(r.Context(), notifications.Notification{
+				Title: "Pickle",
+				Body:  "Notifications are working.",
+				URL:   "/settings",
+				Tag:   "pickle-test",
+			})
+			if errors.Is(err, notifications.ErrNoSubscriptions) {
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			}
+			if err != nil && sent == 0 {
+				log.Printf("send test notification: %v", err)
+				http.Error(w, "failed to send notification", http.StatusBadGateway)
+				return
+			}
+			if err != nil {
+				log.Printf("send some test notifications: %v", err)
+			}
+			writeJSON(w, map[string]int{"sent": sent})
+		default:
+			w.Header().Set("Allow", "GET, PUT, DELETE, POST")
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
 }
 
 func settingsHandler(settings *config.Store) http.Handler {
@@ -188,4 +265,30 @@ func writeJSON(w http.ResponseWriter, value any) {
 	if err := json.NewEncoder(w).Encode(value); err != nil {
 		log.Printf("encode JSON response: %v", err)
 	}
+}
+
+func decodeJSON(w http.ResponseWriter, r *http.Request, value any) error {
+	r.Body = http.MaxBytesReader(w, r.Body, 16<<10)
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(value); err != nil {
+		return err
+	}
+	var extra any
+	if err := decoder.Decode(&extra); !errors.Is(err, io.EOF) {
+		if err == nil {
+			return errors.New("unexpected data after request")
+		}
+		return err
+	}
+	return nil
+}
+
+func sameOrigin(r *http.Request) bool {
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		return true
+	}
+	parsed, err := url.Parse(origin)
+	return err == nil && strings.EqualFold(parsed.Host, r.Host)
 }

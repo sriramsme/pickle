@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { AppHeader } from "../../app/AppHeader";
 import { projectsQuery, servicesQuery } from "../dashboard/api";
+import { NotificationSettings } from "../notifications/NotificationSettings";
 import { saveSettings, settingsQuery, type HostSettings } from "./api";
 
 export function SettingsPage({ setup = false }: { setup?: boolean }) {
@@ -83,6 +84,8 @@ function SettingsForm({ settings, setup }: { settings: HostSettings; setup: bool
             )}
           </form>
         </section>
+
+        {!setup && <NotificationSettings />}
 
         <section className="mt-8 rounded-xl bg-surface-subtle p-5 max-[620px]:p-4">
           <h2 className="m-0 text-sm font-semibold">Remote access</h2>

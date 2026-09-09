@@ -220,6 +220,7 @@ The working foundation includes:
 - a compact toolbar on touch devices
 - private access through Tailscale Serve
 - first-run host configuration and in-app project-folder settings
+- opt-in Web Push notifications with host-side subscription storage
 
 Near-term work should make this comfortable as a PWA on laptops, iPhones, and
 iPads. Keep testing viewport behavior, hardware keyboard behavior, and the touch

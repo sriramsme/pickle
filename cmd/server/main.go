@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/sriramsme/pickle/internal/config"
+	"github.com/sriramsme/pickle/internal/notifications"
 	"github.com/sriramsme/pickle/internal/server"
 )
 
@@ -27,10 +28,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	notificationStore, err := notifications.Load(filepath.Join(filepath.Dir(*configPath), "notifications.json"))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	httpServer := &http.Server{
 		Addr:              *addr,
-		Handler:           server.New(settings),
+		Handler:           server.New(settings, notificationStore),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
