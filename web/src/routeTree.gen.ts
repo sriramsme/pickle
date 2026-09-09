@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as SessionsRouteImport } from './routes/sessions'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SetupRouteImport } from './routes/setup'
 import { Route as TmuxSessionRouteImport } from './routes/tmux.$session'
 
 const IndexRoute = IndexRouteImport.update({
@@ -35,6 +37,16 @@ const SessionsRoute = SessionsRouteImport.update({
   path: '/sessions',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetupRoute = SetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TmuxSessionRoute = TmuxSessionRouteImport.update({
   id: '/tmux/$session',
   path: '/tmux/$session',
@@ -46,6 +58,8 @@ export interface FileRoutesByFullPath {
   '/projects': typeof ProjectsRoute
   '/services': typeof ServicesRoute
   '/sessions': typeof SessionsRoute
+  '/settings': typeof SettingsRoute
+  '/setup': typeof SetupRoute
   '/tmux/$session': typeof TmuxSessionRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +67,8 @@ export interface FileRoutesByTo {
   '/projects': typeof ProjectsRoute
   '/services': typeof ServicesRoute
   '/sessions': typeof SessionsRoute
+  '/settings': typeof SettingsRoute
+  '/setup': typeof SetupRoute
   '/tmux/$session': typeof TmuxSessionRoute
 }
 export interface FileRoutesById {
@@ -61,19 +77,37 @@ export interface FileRoutesById {
   '/projects': typeof ProjectsRoute
   '/services': typeof ServicesRoute
   '/sessions': typeof SessionsRoute
+  '/settings': typeof SettingsRoute
+  '/setup': typeof SetupRoute
   '/tmux/$session': typeof TmuxSessionRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/projects' | '/services' | '/sessions' | '/tmux/$session'
+  fullPaths:
+    | '/'
+    | '/projects'
+    | '/services'
+    | '/sessions'
+    | '/settings'
+    | '/setup'
+    | '/tmux/$session'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/projects' | '/services' | '/sessions' | '/tmux/$session'
+  to:
+    | '/'
+    | '/projects'
+    | '/services'
+    | '/sessions'
+    | '/settings'
+    | '/setup'
+    | '/tmux/$session'
   id:
     | '__root__'
     | '/'
     | '/projects'
     | '/services'
     | '/sessions'
+    | '/settings'
+    | '/setup'
     | '/tmux/$session'
   fileRoutesById: FileRoutesById
 }
@@ -82,6 +116,8 @@ export interface RootRouteChildren {
   ProjectsRoute: typeof ProjectsRoute
   ServicesRoute: typeof ServicesRoute
   SessionsRoute: typeof SessionsRoute
+  SettingsRoute: typeof SettingsRoute
+  SetupRoute: typeof SetupRoute
   TmuxSessionRoute: typeof TmuxSessionRoute
 }
 
@@ -115,6 +151,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SessionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/setup': {
+      id: '/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof SetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tmux/$session': {
       id: '/tmux/$session'
       path: '/tmux/$session'
@@ -130,6 +180,8 @@ const rootRouteChildren: RootRouteChildren = {
   ProjectsRoute: ProjectsRoute,
   ServicesRoute: ServicesRoute,
   SessionsRoute: SessionsRoute,
+  SettingsRoute: SettingsRoute,
+  SetupRoute: SetupRoute,
   TmuxSessionRoute: TmuxSessionRoute,
 }
 export const routeTree = rootRouteImport

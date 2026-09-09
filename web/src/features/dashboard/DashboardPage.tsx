@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
+import { AppHeader } from "../../app/AppHeader";
 import {
   openProject,
   projectsQuery,
@@ -53,12 +54,7 @@ export function DashboardPage({ view }: { view: DashboardView }) {
   return (
     <main className="h-full min-h-dvh w-full overflow-y-auto bg-background pt-[max(24px,env(safe-area-inset-top))] pr-[max(20px,env(safe-area-inset-right))] pb-[max(24px,env(safe-area-inset-bottom))] pl-[max(20px,env(safe-area-inset-left))] [-webkit-overflow-scrolling:touch]">
       <div className="mx-auto w-full max-w-[760px]">
-        <header className="mt-1 mb-10 flex max-[620px]:mb-8">
-          <Link className="flex items-center gap-2.5 text-inherit no-underline" to="/">
-            <img className="h-[34px] w-[34px] rounded-lg" src="/apple-touch-icon.png" alt="" />
-            <h1 className="m-0 text-lg font-semibold">Pickle</h1>
-          </Link>
-        </header>
+        <AppHeader action="settings" />
 
         {(view === "overview" || view === "services") && (
           <ServicesSection

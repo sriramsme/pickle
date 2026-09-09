@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/sriramsme/pickle/internal/config"
 	"github.com/sriramsme/pickle/internal/server"
 )
 
@@ -18,12 +19,18 @@ func main() {
 	}
 
 	addr := flag.String("addr", "127.0.0.1:8080", "HTTP listen address")
-	projectsDir := flag.String("projects-dir", filepath.Join(home, "projects"), "projects directory")
+	configPath := flag.String("config", config.DefaultPath(home), "configuration file")
+	projectsDir := flag.String("projects-dir", "", "override the configured projects directory")
 	flag.Parse()
+
+	settings, err := config.Load(*configPath, filepath.Join(home, "projects"), *projectsDir)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	httpServer := &http.Server{
 		Addr:              *addr,
-		Handler:           server.New(*projectsDir),
+		Handler:           server.New(settings),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

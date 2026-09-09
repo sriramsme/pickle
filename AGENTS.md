@@ -153,6 +153,7 @@ Keep the layout close to the current structure:
 ```text
 .
 ├── cmd/server/
+├── internal/config/
 ├── internal/server/
 ├── internal/terminal/
 ├── web/src/
@@ -218,6 +219,7 @@ The working foundation includes:
 - an installable PWA shell
 - a compact toolbar on touch devices
 - private access through Tailscale Serve
+- first-run host configuration and in-app project-folder settings
 
 Near-term work should make this comfortable as a PWA on laptops, iPhones, and
 iPads. Keep testing viewport behavior, hardware keyboard behavior, and the touch

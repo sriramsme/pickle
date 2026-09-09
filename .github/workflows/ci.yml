@@ -31,3 +31,7 @@ jobs:
         run: go test -count=1 ./...
       - name: Build embedded server
         run: go build -trimpath -o /tmp/pickle ./cmd/server
+      - name: Check install scripts
+        run: |
+          sh -n install.sh
+          bash -n scripts/package-release.sh
