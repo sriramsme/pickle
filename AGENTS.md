@@ -223,10 +223,10 @@ Near-term work should make this comfortable as a PWA on laptops, iPhones, and
 iPads. Keep testing viewport behavior, hardware keyboard behavior, and the touch
 toolbar against real terminal workflows.
 
-The first control-plane slice lists existing tmux sessions and local projects.
-Projects open in a matching session at `/tmux/<session>`. Possible later work
-includes session controls, agent status, development server links, container
-status, logs, host status, and multiple hosts.
+The control-plane foundation lists tmux sessions, local projects, host
+development servers, and Docker Compose services. Projects open in a matching
+session at `/tmux/<session>`. Possible later work includes session controls,
+agent status, logs, notifications, host status, and multiple hosts.
 
 Do not add a database, account system, OAuth framework, Docker requirement,
 Kubernetes, Redis, message queue, component library, or plugin architecture

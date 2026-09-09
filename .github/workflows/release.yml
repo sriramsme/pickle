@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: pnpm/setup@v2
+        with:
+          version: 11.9.0
+          runtime: node@22
+          working-directory: web
+          cache: true
+          require-lockfile: true
+      - name: Test backend
+        run: go test -count=1 ./...
+      - name: Build release files
+        run: scripts/package-release.sh "$GITHUB_REF_NAME"
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "$GITHUB_REF_NAME"
+          build/pickle_*
+          build/checksums.txt
+          --verify-tag
+          --generate-notes
+          --title "$GITHUB_REF_NAME"

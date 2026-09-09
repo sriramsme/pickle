@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: pnpm/setup@v2
+        with:
+          version: 11.9.0
+          runtime: node@22
+          working-directory: web
+          cache: true
+          require-lockfile: true
+      - name: Check frontend
+        run: |
+          pnpm --dir web typecheck
+          pnpm --dir web build
+      - name: Test backend
+        run: go test -count=1 ./...
+      - name: Build embedded server
+        run: go build -trimpath -o /tmp/pickle ./cmd/server

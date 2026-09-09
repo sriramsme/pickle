@@ -1,0 +1,11 @@
+[Unit]
+Description=Pickle remote development control surface
+
+[Service]
+ExecStart=%h/.local/bin/pickle
+Restart=on-failure
+RestartSec=2
+KillMode=process
+
+[Install]
+WantedBy=default.target

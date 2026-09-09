@@ -91,6 +91,39 @@ and reopening the iOS app is one way to do that.
 Pickle listens on localhost by default. The address can be changed with
 `-addr`, but a private reverse proxy is the preferred way to reach it remotely.
 
+## Build release files
+
+Build stripped Linux binaries for x86-64 and ARM64, plus their checksums:
+
+```bash
+scripts/package-release.sh v0.1.0
+```
+
+The files are written to `build/`. Pushing a tag beginning with `v` runs the
+same build and publishes the files in a GitHub release.
+
+## Keep Pickle running
+
+After using the **Build one binary** steps, install `pickle` and the example
+systemd user service:
+
+```bash
+install -Dm755 pickle ~/.local/bin/pickle
+install -Dm644 contrib/systemd/pickle.service ~/.config/systemd/user/pickle.service
+systemctl --user daemon-reload
+systemctl --user enable --now pickle
+```
+
+Check it or restart it after replacing the binary:
+
+```bash
+systemctl --user status pickle
+systemctl --user restart pickle
+```
+
+The unit deliberately stops only the Pickle process so a service restart does
+not kill the tmux server and its sessions.
+
 ## Reach it through Tailscale
 
 Keep Pickle running on `127.0.0.1:8080`, then open another terminal and run:
@@ -116,8 +149,7 @@ tailscale serve --https=443 off
 ```
 
 The Serve configuration runs in the background, but the Pickle process still
-needs to be running. Process supervision and install packaging will come after
-the basic workflow settles.
+needs to be running. The systemd user service above handles that.
 
 ## Install it on a device
 
@@ -198,7 +230,8 @@ There is no application login yet. The current security boundary is:
 - The service is not exposed through Tailscale Funnel or a public port.
 
 Do not expose Pickle directly to the public internet. Public temporary access
-needs a separate, carefully designed authentication flow.
+needs a separate, carefully designed authentication flow. See
+[SECURITY.md](SECURITY.md) for vulnerability reporting.
 
 ## Current scope
 
@@ -211,8 +244,8 @@ sessions, discovers local projects, and opens both in session-specific
 terminals. It also shows host processes and Docker Compose services associated
 with those projects.
 
-Development-server links, session controls, container status, clipboard helpers,
-and public authentication are later work.
+Session controls, logs, agent status, notifications, clipboard helpers, host
+status, multiple hosts, and public authentication are later work.
 
 ## License
 

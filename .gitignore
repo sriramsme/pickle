@@ -1,4 +1,5 @@
 /pickle
+/build/
 web/dist/*
 !web/dist/.gitkeep
 web/node_modules/

@@ -81,7 +81,31 @@ func New(projectsDir string) http.Handler {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
-	mux.HandleFunc("/api/services", func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/api/services", serviceHandler(projectsDir))
+
+	dist, err := fs.Sub(webassets.Dist, "dist")
+	if err != nil {
+		panic(err)
+	}
+	index, err := fs.ReadFile(dist, "index.html")
+	if err != nil {
+		panic(err)
+	}
+	serveIndex := func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write(index)
+	}
+	mux.HandleFunc("/tmux/", serveIndex)
+	mux.HandleFunc("/projects", serveIndex)
+	mux.HandleFunc("/services", serveIndex)
+	mux.HandleFunc("/sessions", serveIndex)
+	mux.Handle("/", http.FileServer(http.FS(dist)))
+
+	return mux
+}
+
+func serviceHandler(projectsDir string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
 			serviceList, err := services.List(r.Context(), projectsDir)
@@ -117,26 +141,6 @@ func New(projectsDir string) http.Handler {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
-
-	dist, err := fs.Sub(webassets.Dist, "dist")
-	if err != nil {
-		panic(err)
-	}
-	index, err := fs.ReadFile(dist, "index.html")
-	if err != nil {
-		panic(err)
-	}
-	serveIndex := func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_, _ = w.Write(index)
-	}
-	mux.HandleFunc("/tmux/", serveIndex)
-	mux.HandleFunc("/projects", serveIndex)
-	mux.HandleFunc("/services", serveIndex)
-	mux.HandleFunc("/sessions", serveIndex)
-	mux.Handle("/", http.FileServer(http.FS(dist)))
-
-	return mux
 }
 
 func writeJSON(w http.ResponseWriter, value any) {
