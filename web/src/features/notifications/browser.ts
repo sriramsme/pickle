@@ -16,6 +16,27 @@ export function registerNotificationWorker() {
   return navigator.serviceWorker.register("/service-worker.js");
 }
 
+export function listenForNotificationNavigation() {
+  if (!("serviceWorker" in navigator)) {
+    return;
+  }
+  navigator.serviceWorker.addEventListener("message", (event) => {
+    const message = event.data as { type?: unknown; url?: unknown } | null;
+    if (message?.type !== "pickle:navigate" || typeof message.url !== "string") {
+      return;
+    }
+    const target = new URL(message.url, window.location.origin);
+    if (target.origin !== window.location.origin) {
+      return;
+    }
+    const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    const destination = `${target.pathname}${target.search}${target.hash}`;
+    if (destination !== current) {
+      window.location.assign(target.href);
+    }
+  });
+}
+
 export async function getBrowserSubscription() {
   const registration = await registerNotificationWorker();
   return registration ? registration.pushManager.getSubscription() : null;

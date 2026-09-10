@@ -10,6 +10,7 @@ import (
 )
 
 func TestRunNotifySendsConfiguredNotification(t *testing.T) {
+	t.Setenv("TMUX_PANE", "")
 	var received sendRequest
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost || r.URL.Path != "/api/notifications" {
@@ -46,6 +47,7 @@ func TestRunNotifySendsConfiguredNotification(t *testing.T) {
 }
 
 func TestRunNotifyReadsStdinAndWritesJSON(t *testing.T) {
+	t.Setenv("TMUX_PANE", "")
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"sent":1}`))
@@ -69,6 +71,7 @@ func TestRunNotifyReadsStdinAndWritesJSON(t *testing.T) {
 }
 
 func TestRunNotifyRejectsExternalDestination(t *testing.T) {
+	t.Setenv("TMUX_PANE", "")
 	err := RunNotify(
 		t.Context(),
 		[]string{"--url", "https://example.com", "Finished"},
@@ -78,5 +81,28 @@ func TestRunNotifyRejectsExternalDestination(t *testing.T) {
 	)
 	if err == nil || !strings.Contains(err.Error(), "local Pickle path") {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestParseTmuxContext(t *testing.T) {
+	context, err := parseTmuxContext([]byte("work\t1\t2\t%7\n"))
+	if err != nil {
+		t.Fatalf("parse tmux context: %v", err)
+	}
+	context.AgentKind = "codex"
+	if title := context.title(); title != "Codex · work:1.2" {
+		t.Fatalf("unexpected title: %q", title)
+	}
+	if destination := context.url(); destination != "/tmux/work" {
+		t.Fatalf("unexpected URL: %q", destination)
+	}
+	if tag := context.tag(); tag != "pickle-pane-7" {
+		t.Fatalf("unexpected tag: %q", tag)
+	}
+}
+
+func TestParseTmuxContextRejectsInvalidPane(t *testing.T) {
+	if _, err := parseTmuxContext([]byte("work\t1\t2\tnot-a-pane\n")); err == nil {
+		t.Fatal("expected an error")
 	}
 }

@@ -26,15 +26,20 @@ notifications off and on again on each device after removing it.
 
 ```bash
 pickle notify "The task finished"
-pickle notify --title "Codex needs input" --url "/tmux/pickle" \
-  --tag "codex-pickle" --urgency high "Waiting for your approval"
+pickle notify --urgency high "Waiting for your approval"
 ```
+
+Inside tmux, Pickle identifies the current session, window, pane, and supported
+coding agent. It uses them to create the title and replacement tag, and tapping
+the notification opens the relevant tmux session. Explicit `--title`, `--url`,
+and `--tag` values override these defaults.
 
 Options include:
 
-- `--title` sets the notification title. The default is `Pickle`.
+- `--title` sets the notification title.
 - `--url` opens a local Pickle route when the notification is tapped.
-- `--tag` groups similar notifications on browsers that support it.
+- `--tag` groups similar notifications on browsers that support it. By default,
+  notifications from the same tmux pane replace one another.
 - `--urgency` accepts `low`, `normal`, or `high`.
 - `--stdin` reads the message from standard input.
 - `--json` prints a machine-readable delivery result.
@@ -65,13 +70,13 @@ If the `pickle` command is available, send one concise notification when:
 
 Use:
 
-`pickle notify --title "<agent and project>" --tag "<stable task id>" --url "<relevant Pickle route>" "<outcome or exact input needed>"`
+`pickle notify "<outcome or exact input needed>"`
 
-Use `--urgency high` only when work cannot continue without me. Omit `--url`
-when there is no useful Pickle screen to open. Do not notify for routine
-progress, every tool call, or while I am actively responding. Never include
-secrets, tokens, source code, customer data, or other sensitive information
-because notifications may appear on a lock screen. If notification delivery
-fails, continue normally and mention it in your final response instead of
-retrying repeatedly.
+When running outside tmux, add `--title` and `--url` when they provide useful
+context. Use `--urgency high` only when work cannot continue without me. Do not
+notify for routine progress, every tool call, or while I am actively responding.
+Never include secrets, tokens, source code, customer data, or other sensitive
+information because notifications may appear on a lock screen. If notification
+delivery fails, continue normally and mention it in your final response instead
+of retrying repeatedly.
 ```

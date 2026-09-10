@@ -34,9 +34,9 @@ type sendResponse struct {
 func RunNotify(ctx context.Context, args []string, input io.Reader, output, errorOutput io.Writer) error {
 	flags := flag.NewFlagSet("notify", flag.ContinueOnError)
 	flags.SetOutput(errorOutput)
-	title := flags.String("title", "Pickle", "notification title")
-	destination := flags.String("url", "/", "local Pickle path opened when tapped")
-	tag := flags.String("tag", "", "stable tag used to replace similar notifications")
+	title := flags.String("title", "Pickle", "notification title; defaults to tmux context when available")
+	destination := flags.String("url", "/", "local Pickle path; defaults to the current tmux session")
+	tag := flags.String("tag", "", "replacement tag; defaults to the current tmux pane")
 	urgency := flags.String("urgency", string(notifications.UrgencyNormal), "delivery urgency: low, normal, or high")
 	serverURL := flags.String("server", serverURLFromEnvironment(), "running Pickle server URL")
 	readStdin := flags.Bool("stdin", false, "read the message from standard input")
@@ -56,11 +56,32 @@ func RunNotify(ctx context.Context, args []string, input io.Reader, output, erro
 	if *timeout <= 0 {
 		return errors.New("timeout must be greater than zero")
 	}
-
 	message, err := notificationMessage(flags.Args(), *readStdin, input)
 	if err != nil {
 		return err
 	}
+
+	explicit := make(map[string]bool)
+	flags.Visit(func(option *flag.Flag) {
+		explicit[option.Name] = true
+	})
+	if !explicit["title"] || !explicit["url"] || !explicit["tag"] {
+		lookupContext, cancel := context.WithTimeout(ctx, time.Second)
+		tmuxContext, ok := currentTmuxContext(lookupContext)
+		cancel()
+		if ok {
+			if !explicit["title"] {
+				*title = tmuxContext.title()
+			}
+			if !explicit["url"] {
+				*destination = tmuxContext.url()
+			}
+			if !explicit["tag"] {
+				*tag = tmuxContext.tag()
+			}
+		}
+	}
+
 	notification := notifications.Notification{
 		Title:   strings.TrimSpace(*title),
 		Body:    message,

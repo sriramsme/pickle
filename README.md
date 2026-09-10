@@ -77,9 +77,11 @@ agent can send a message through the running server:
 
 ```bash
 pickle notify "Tests passed and the task is ready for review"
-pickle notify --title "Codex needs input" --url "/tmux/pickle" --urgency high \
-  "Waiting for your approval"
+pickle notify --urgency high "Waiting for your approval"
 ```
+
+When run inside tmux, the command automatically identifies the agent and pane,
+adds that context to the title, and opens the relevant session when tapped.
 
 See [Notifications](docs/notifications.md) for every option and a ready-to-copy
 instruction for your root agent configuration.
