@@ -21,7 +21,6 @@ jobs:
           version: 11.9.0
           runtime: node@22
           working-directory: web
-          cache: true
           require-lockfile: true
       - name: Check frontend
         run: |
