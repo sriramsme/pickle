@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import type { Project, Service, TmuxSession } from "./api";
+import type { Agent, Project, Service, TmuxSession } from "./api";
 
 const previewLimit = 3;
 const nameClass =
@@ -154,10 +154,12 @@ function groupServicesByProject(services?: Service[]) {
 }
 
 export function SessionsSection({
+  agents,
   sessions,
   failed,
   preview,
 }: {
+  agents?: Agent[];
   sessions?: TmuxSession[];
   failed: boolean;
   preview: boolean;
@@ -172,37 +174,45 @@ export function SessionsSection({
       <div className="border-t border-border">
         {failed && sessions === undefined && <Message>Unable to load sessions</Message>}
         {!failed && sessions === undefined && <Message>Loading</Message>}
-        {visibleSessions?.map((session) => (
-          <Link
-            className={`${interactiveRowClass} grid-cols-[minmax(140px,1fr)_auto_auto_14px] max-[620px]:grid-cols-[minmax(0,1fr)_auto_14px] max-[620px]:gap-2.5`}
-            key={session.name}
-            params={{ session: session.name }}
-            to="/tmux/$session"
-          >
-            <span className={nameClass}>
+        {visibleSessions?.map((session) => {
+          const sessionAgents = agents?.filter((agent) => agent.session === session.name) ?? [];
+          return (
+            <Link
+              className={`${interactiveRowClass} grid-cols-[minmax(140px,1fr)_auto_auto_14px] max-[620px]:grid-cols-[minmax(0,1fr)_auto_14px] max-[620px]:gap-2.5`}
+              key={session.name}
+              params={{ session: session.name }}
+              to="/tmux/$session"
+            >
+              <span className={nameClass}>
+                <span
+                  className={`h-1.5 w-1.5 shrink-0 rounded-full ${session.attached > 0 ? "bg-accent" : "bg-quiet"}`}
+                />
+                {session.name}
+              </span>
               <span
-                className={`h-1.5 w-1.5 shrink-0 rounded-full ${session.attached > 0 ? "bg-accent" : "bg-quiet"}`}
-              />
-              {session.name}
-            </span>
-            <span className={`${metaClass} max-[620px]:col-start-1 max-[620px]:pl-[15px]`}>
-              {session.windows} {session.windows === 1 ? "window" : "windows"}
-              {session.attached > 0 && ` · ${session.attached} attached`}
-            </span>
-            <time
-              className={`${metaClass} max-[620px]:col-start-2 max-[620px]:row-span-2 max-[620px]:row-start-1`}
-              dateTime={session.lastActivity}
-            >
-              {formatActivity(session.lastActivity)}
-            </time>
-            <span
-              className="text-lg text-muted max-[620px]:col-start-3 max-[620px]:row-span-2 max-[620px]:row-start-1"
-              aria-hidden="true"
-            >
-              ›
-            </span>
-          </Link>
-        ))}
+                className={`${metaClass} min-w-0 overflow-hidden text-ellipsis max-[620px]:col-start-1 max-[620px]:pl-[15px]`}
+              >
+                {session.windows} {session.windows === 1 ? "window" : "windows"}
+                {session.attached > 0 && ` · ${session.attached} attached`}
+                {sessionAgents.length > 0 && (
+                  <span className="text-accent/80"> · {formatAgentKinds(sessionAgents)}</span>
+                )}
+              </span>
+              <time
+                className={`${metaClass} max-[620px]:col-start-2 max-[620px]:row-span-2 max-[620px]:row-start-1`}
+                dateTime={session.lastActivity}
+              >
+                {formatActivity(session.lastActivity)}
+              </time>
+              <span
+                className="text-lg text-muted max-[620px]:col-start-3 max-[620px]:row-span-2 max-[620px]:row-start-1"
+                aria-hidden="true"
+              >
+                ›
+              </span>
+            </Link>
+          );
+        })}
         {sessions?.length === 0 && (
           <Link
             className={`${interactiveRowClass} grid-cols-[minmax(140px,1fr)_auto_14px] max-[620px]:grid-cols-[minmax(0,1fr)_14px] max-[620px]:gap-2.5`}
@@ -285,4 +295,14 @@ function formatActivity(value: string) {
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function formatAgentKinds(agents: Agent[]) {
+  const counts = new Map<string, number>();
+  for (const agent of agents) {
+    counts.set(agent.kind, (counts.get(agent.kind) ?? 0) + 1);
+  }
+  return [...counts]
+    .map(([kind, count]) => (count > 1 ? `${count} ${kind}` : kind))
+    .join(" + ");
 }

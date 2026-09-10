@@ -12,6 +12,7 @@ network drops.
 - Runs a real tmux terminal in the browser
 - Reconnects to persistent sessions
 - Lists tmux sessions and local projects
+- Shows coding agents running inside tmux panes
 - Finds project development servers and Docker Compose services
 - Opens HTTP services privately through Tailscale Serve
 - Installs as a home-screen app on iPhone and iPad
@@ -64,7 +65,12 @@ Open the private Tailscale address in Safari on an iPhone or iPad, use the Share
 menu, and choose **Add to Home Screen**. Pickle opens as a standalone app and
 reconnects to the same tmux session when possible.
 
-## Notify from scripts and agents
+## Agents and notifications
+
+Pickle recognizes Codex, Claude Code, OpenCode, Pi, and Hermes when they are
+running inside tmux. It uses process information only and does not read or save
+terminal contents. A running label means the agent process is present; use
+`pickle notify` when an agent finishes or needs attention.
 
 After enabling notifications in Pickle's Settings, any local script or coding
 agent can send a message through the running server:

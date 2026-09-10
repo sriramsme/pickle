@@ -8,6 +8,15 @@ export type TmuxSession = {
   lastActivity: string;
 };
 
+export type Agent = {
+  id: string;
+  kind: "codex" | "claude" | "opencode" | "pi" | "hermes";
+  project?: string;
+  session: string;
+  window: number;
+  pane: number;
+};
+
 export type Project = {
   name: string;
   session: string;
@@ -41,6 +50,12 @@ const refreshInterval = 5_000;
 export const sessionsQuery = queryOptions({
   queryKey: ["tmux", "sessions"],
   queryFn: () => requestJSON<TmuxSession[]>("/api/tmux/sessions", { cache: "no-store" }),
+  refetchInterval: refreshInterval,
+});
+
+export const agentsQuery = queryOptions({
+  queryKey: ["agents"],
+  queryFn: () => requestJSON<Agent[]>("/api/agents", { cache: "no-store" }),
   refetchInterval: refreshInterval,
 });
 

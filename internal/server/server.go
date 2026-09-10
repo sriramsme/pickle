@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/sriramsme/pickle/internal/agents"
 	"github.com/sriramsme/pickle/internal/config"
 	"github.com/sriramsme/pickle/internal/notifications"
 	"github.com/sriramsme/pickle/internal/projects"
@@ -70,6 +71,21 @@ func New(settings *config.Store, notificationStore notificationService) http.Han
 			return
 		}
 		writeJSON(w, sessions)
+	})
+	mux.HandleFunc("/api/agents", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.Header().Set("Allow", http.MethodGet)
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		agentList, err := agents.List(r.Context(), settings.ProjectsDirectory())
+		if err != nil {
+			log.Printf("list agents: %v", err)
+			http.Error(w, "failed to list agents", http.StatusInternalServerError)
+			return
+		}
+		writeJSON(w, agentList)
 	})
 	mux.Handle("/api/notifications", notificationHandler(notificationStore))
 	mux.Handle("/api/settings", settingsHandler(settings))

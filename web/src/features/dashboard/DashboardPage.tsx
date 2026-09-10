@@ -3,13 +3,18 @@ import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { AppHeader } from "../../app/AppHeader";
 import {
+  agentsQuery,
   openProject,
   projectsQuery,
   runServiceAction,
   servicesQuery,
   sessionsQuery,
 } from "./api";
-import { ProjectsSection, ServicesSection, SessionsSection } from "./DashboardSections";
+import {
+  ProjectsSection,
+  ServicesSection,
+  SessionsSection,
+} from "./DashboardSections";
 import { ServiceSheet } from "./ServiceSheet";
 
 export type DashboardView = "overview" | "services" | "sessions" | "projects";
@@ -21,10 +26,12 @@ export function DashboardPage({ view }: { view: DashboardView }) {
   const closeService = useCallback(() => setSelectedServiceID(undefined), []);
   const preview = view === "overview";
   const needsSessions = preview || view === "sessions" || view === "projects";
+  const needsAgents = preview || view === "sessions";
   const needsProjects = preview || view === "projects";
   const needsServices = preview || view === "services";
 
   const sessions = useQuery({ ...sessionsQuery, enabled: needsSessions });
+  const agents = useQuery({ ...agentsQuery, enabled: needsAgents });
   const projects = useQuery({ ...projectsQuery, enabled: needsProjects });
   const services = useQuery({ ...servicesQuery, enabled: needsServices });
   const projectMutation = useMutation({
@@ -66,6 +73,7 @@ export function DashboardPage({ view }: { view: DashboardView }) {
         )}
         {(view === "overview" || view === "sessions") && (
           <SessionsSection
+            agents={agents.data}
             sessions={sessions.data}
             failed={sessions.isError}
             preview={preview}
