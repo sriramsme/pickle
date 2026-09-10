@@ -99,6 +99,10 @@ func TestParseTmuxContext(t *testing.T) {
 	if tag := context.tag(); tag != "pickle-pane-7" {
 		t.Fatalf("unexpected tag: %q", tag)
 	}
+	sent := context.sendContext(true)
+	if sent == nil || sent.PaneID != "%7" || sent.Kind != "codex" || sent.Session != "work" || sent.Window != 1 || sent.Pane != 2 {
+		t.Fatalf("unexpected send context: %+v", sent)
+	}
 }
 
 func TestParseTmuxContextRejectsInvalidPane(t *testing.T) {

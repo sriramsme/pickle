@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/sriramsme/pickle/internal/agents"
 	"github.com/sriramsme/pickle/internal/config"
 	"github.com/sriramsme/pickle/internal/notifications"
 )
@@ -89,7 +90,8 @@ func TestSettingsHandlerUpdatesProjectsDirectory(t *testing.T) {
 
 func TestNotificationHandlerSubscribesAndSendsTest(t *testing.T) {
 	service := &fakeNotificationService{publicKey: "public-key"}
-	handler := notificationHandler(service)
+	activityStore := agents.NewActivityStore()
+	handler := notificationHandler(service, activityStore)
 	subscription := `{"endpoint":"https://push.example/device","keys":{"auth":"auth","p256dh":"p256dh"}}`
 	request := httptest.NewRequest(http.MethodPut, "/api/notifications", strings.NewReader(subscription))
 	request.Header.Set("Origin", "http://example.com")
@@ -104,7 +106,7 @@ func TestNotificationHandlerSubscribesAndSendsTest(t *testing.T) {
 	request = httptest.NewRequest(
 		http.MethodPost,
 		"/api/notifications",
-		strings.NewReader(`{"title":"Codex","body":"Finished","url":"/tmux/pickle","tag":"codex-pickle","urgency":"high"}`),
+		strings.NewReader(`{"title":"Codex","body":"Finished","url":"/tmux/pickle","tag":"codex-pickle","urgency":"high","context":{"paneId":"%7","kind":"codex","session":"pickle","window":1,"pane":2}}`),
 	)
 	request.Header.Set("Origin", "http://example.com")
 	response = httptest.NewRecorder()
@@ -112,6 +114,10 @@ func TestNotificationHandlerSubscribesAndSendsTest(t *testing.T) {
 
 	if response.Code != http.StatusOK || service.sentTo != "all" || service.notification.Urgency != notifications.UrgencyHigh {
 		t.Fatalf("unexpected test response: %d, %q", response.Code, service.sentTo)
+	}
+	activities := activityStore.List()
+	if len(activities) != 1 || activities[0].Message != "Finished" || activities[0].Session != "pickle" {
+		t.Fatalf("unexpected activities: %+v", activities)
 	}
 }
 
@@ -123,7 +129,7 @@ func TestNotificationHandlerRejectsExternalDestination(t *testing.T) {
 	)
 	response := httptest.NewRecorder()
 
-	notificationHandler(&fakeNotificationService{}).ServeHTTP(response, request)
+	notificationHandler(&fakeNotificationService{}, agents.NewActivityStore()).ServeHTTP(response, request)
 
 	if response.Code != http.StatusBadRequest {
 		t.Fatalf("unexpected status: %d", response.Code)
@@ -135,10 +141,33 @@ func TestNotificationHandlerRejectsCrossOriginMutation(t *testing.T) {
 	request.Header.Set("Origin", "https://other.example")
 	response := httptest.NewRecorder()
 
-	notificationHandler(&fakeNotificationService{}).ServeHTTP(response, request)
+	notificationHandler(&fakeNotificationService{}, agents.NewActivityStore()).ServeHTTP(response, request)
 
 	if response.Code != http.StatusForbidden {
 		t.Fatalf("unexpected status: %d", response.Code)
+	}
+}
+
+func TestAgentActivityHandlerListsAndDismisses(t *testing.T) {
+	store := agents.NewActivityStore()
+	context := agents.ActivityContext{PaneID: "%7", Kind: "codex", Session: "pickle", Window: 1, Pane: 2}
+	if err := store.Record(context, "Finished", "/tmux/pickle"); err != nil {
+		t.Fatalf("record activity: %v", err)
+	}
+	handler := agentActivityHandler(store)
+
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/agent-activity", nil))
+	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), `"message":"Finished"`) {
+		t.Fatalf("unexpected list response: %d, %s", response.Code, response.Body.String())
+	}
+
+	request := httptest.NewRequest(http.MethodDelete, "/api/agent-activity?id=%257", nil)
+	request.Header.Set("Origin", "http://example.com")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusOK || len(store.List()) != 0 {
+		t.Fatalf("unexpected dismiss response: %d, %s", response.Code, response.Body.String())
 	}
 }
 

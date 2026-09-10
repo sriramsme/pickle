@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createRootRoute, Navigate, Outlet, useRouterState } from "@tanstack/react-router";
+import { AgentIsland } from "../features/agents/AgentIsland";
 import { settingsQuery } from "../features/settings/api";
 
 export const Route = createRootRoute({
@@ -36,5 +37,10 @@ function RootLayout() {
   if (settings.data.configured && pathname === "/setup") {
     return <Navigate replace to="/" />;
   }
-  return <Outlet />;
+  return (
+    <>
+      {pathname !== "/setup" && <AgentIsland />}
+      <Outlet />
+    </>
+  );
 }

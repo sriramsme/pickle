@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { AppHeader } from "../../app/AppHeader";
+import { agentsQuery } from "../agents/api";
 import {
-  agentsQuery,
   openProject,
   projectsQuery,
   runServiceAction,

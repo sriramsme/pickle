@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/sriramsme/pickle/internal/agents"
 	"github.com/sriramsme/pickle/internal/config"
@@ -41,15 +42,17 @@ type notificationEndpointRequest struct {
 }
 
 type sendNotificationRequest struct {
-	Title   string `json:"title"`
-	Body    string `json:"body"`
-	URL     string `json:"url"`
-	Tag     string `json:"tag,omitempty"`
-	Urgency string `json:"urgency"`
+	Title   string                  `json:"title"`
+	Body    string                  `json:"body"`
+	URL     string                  `json:"url"`
+	Tag     string                  `json:"tag,omitempty"`
+	Urgency string                  `json:"urgency"`
+	Context *agents.ActivityContext `json:"context,omitempty"`
 }
 
 func New(settings *config.Store, notificationStore notificationService) http.Handler {
 	terminalHandler := terminal.New("pickle")
+	activityStore := agents.NewActivityStore()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
@@ -87,7 +90,25 @@ func New(settings *config.Store, notificationStore notificationService) http.Han
 		}
 		writeJSON(w, agentList)
 	})
-	mux.Handle("/api/notifications", notificationHandler(notificationStore))
+	mux.HandleFunc("/api/agent-usage", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.Header().Set("Allow", http.MethodGet)
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+		usage, err := agents.ReadUsage(ctx)
+		if err != nil {
+			log.Printf("read agent usage: %v", err)
+			writeJSON(w, []agents.ProviderUsage{})
+			return
+		}
+		writeJSON(w, usage)
+	})
+	mux.Handle("/api/agent-activity", agentActivityHandler(activityStore))
+	mux.Handle("/api/notifications", notificationHandler(notificationStore, activityStore))
 	mux.Handle("/api/settings", settingsHandler(settings))
 	mux.HandleFunc("/api/projects", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -153,7 +174,7 @@ func New(settings *config.Store, notificationStore notificationService) http.Han
 	return mux
 }
 
-func notificationHandler(service notificationService) http.Handler {
+func notificationHandler(service notificationService, activityStore *agents.ActivityStore) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet && !sameOrigin(r) {
 			http.Error(w, "cross-origin request denied", http.StatusForbidden)
@@ -203,6 +224,12 @@ func notificationHandler(service notificationService) http.Handler {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
+			if request.Context != nil {
+				if err := agents.ValidateActivityContext(*request.Context); err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+			}
 			sent, err := service.Send(r.Context(), notification)
 			if errors.Is(err, notifications.ErrInvalidNotification) {
 				http.Error(w, err.Error(), http.StatusBadRequest)
@@ -220,9 +247,36 @@ func notificationHandler(service notificationService) http.Handler {
 			if err != nil {
 				log.Printf("send some notifications: %v", err)
 			}
+			if request.Context != nil {
+				_ = activityStore.Record(*request.Context, notification.Body, notification.URL)
+			}
 			writeJSON(w, map[string]int{"sent": sent})
 		default:
 			w.Header().Set("Allow", "GET, PUT, DELETE, POST")
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+}
+
+func agentActivityHandler(store *agents.ActivityStore) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			writeJSON(w, store.List())
+		case http.MethodDelete:
+			if !sameOrigin(r) {
+				http.Error(w, "cross-origin request denied", http.StatusForbidden)
+				return
+			}
+			id := r.URL.Query().Get("id")
+			if id == "" {
+				http.Error(w, "activity id is required", http.StatusBadRequest)
+				return
+			}
+			store.Dismiss(id)
+			writeJSON(w, map[string]bool{"ok": true})
+		default:
+			w.Header().Set("Allow", "GET, DELETE")
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		}
 	})

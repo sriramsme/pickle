@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import type { Agent, Project, Service, TmuxSession } from "./api";
+import type { Agent } from "../agents/api";
+import type { Project, Service, TmuxSession } from "./api";
 
 const previewLimit = 3;
 const nameClass =

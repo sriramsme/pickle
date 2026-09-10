@@ -20,11 +20,20 @@ import (
 const defaultServerURL = "http://127.0.0.1:8080"
 
 type sendRequest struct {
-	Title   string `json:"title"`
-	Body    string `json:"body"`
-	URL     string `json:"url"`
-	Tag     string `json:"tag,omitempty"`
-	Urgency string `json:"urgency"`
+	Title   string       `json:"title"`
+	Body    string       `json:"body"`
+	URL     string       `json:"url"`
+	Tag     string       `json:"tag,omitempty"`
+	Urgency string       `json:"urgency"`
+	Context *sendContext `json:"context,omitempty"`
+}
+
+type sendContext struct {
+	PaneID  string `json:"paneId"`
+	Kind    string `json:"kind,omitempty"`
+	Session string `json:"session"`
+	Window  int    `json:"window"`
+	Pane    int    `json:"pane"`
 }
 
 type sendResponse struct {
@@ -65,20 +74,18 @@ func RunNotify(ctx context.Context, args []string, input io.Reader, output, erro
 	flags.Visit(func(option *flag.Flag) {
 		explicit[option.Name] = true
 	})
-	if !explicit["title"] || !explicit["url"] || !explicit["tag"] {
-		lookupContext, cancel := context.WithTimeout(ctx, time.Second)
-		tmuxContext, ok := currentTmuxContext(lookupContext)
-		cancel()
-		if ok {
-			if !explicit["title"] {
-				*title = tmuxContext.title()
-			}
-			if !explicit["url"] {
-				*destination = tmuxContext.url()
-			}
-			if !explicit["tag"] {
-				*tag = tmuxContext.tag()
-			}
+	lookupContext, cancel := context.WithTimeout(ctx, time.Second)
+	tmuxContext, hasTmuxContext := currentTmuxContext(lookupContext)
+	cancel()
+	if hasTmuxContext {
+		if !explicit["title"] {
+			*title = tmuxContext.title()
+		}
+		if !explicit["url"] {
+			*destination = tmuxContext.url()
+		}
+		if !explicit["tag"] {
+			*tag = tmuxContext.tag()
 		}
 	}
 
@@ -103,6 +110,7 @@ func RunNotify(ctx context.Context, args []string, input io.Reader, output, erro
 		URL:     notification.URL,
 		Tag:     notification.Tag,
 		Urgency: string(notification.Urgency),
+		Context: tmuxContext.sendContext(hasTmuxContext),
 	})
 	if err != nil {
 		return fmt.Errorf("encode notification: %w", err)

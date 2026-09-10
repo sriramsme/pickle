@@ -8,7 +8,7 @@ export function TerminalPage({ session }: { session: string }) {
         <Link className="text-foreground-subtle no-underline hover:text-accent focus-visible:text-accent" to="/sessions">
           ‹ sessions
         </Link>
-        <span className="overflow-hidden text-ellipsis whitespace-nowrap">{session}</span>
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap max-[620px]:hidden">{session}</span>
       </header>
       <TerminalView session={session} />
     </main>

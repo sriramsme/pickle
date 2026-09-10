@@ -101,6 +101,19 @@ func (current tmuxContext) tag() string {
 	return "pickle-pane-" + strings.TrimPrefix(current.PaneID, "%")
 }
 
+func (current tmuxContext) sendContext(ok bool) *sendContext {
+	if !ok {
+		return nil
+	}
+	return &sendContext{
+		PaneID:  current.PaneID,
+		Kind:    current.AgentKind,
+		Session: current.Session,
+		Window:  current.Window,
+		Pane:    current.Pane,
+	}
+}
+
 func agentTitle(kind string) string {
 	switch kind {
 	case "codex":
