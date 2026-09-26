@@ -59,7 +59,7 @@ export function DashboardPage({ view }: { view: DashboardView }) {
   const selectedService = services.data?.find((service) => service.id === selectedServiceID);
 
   return (
-    <main className="h-full min-h-dvh w-full overflow-y-auto bg-background pt-[max(24px,env(safe-area-inset-top))] pr-[max(20px,env(safe-area-inset-right))] pb-[max(24px,env(safe-area-inset-bottom))] pl-[max(20px,env(safe-area-inset-left))] [-webkit-overflow-scrolling:touch]">
+    <main className="h-full min-h-dvh w-full overflow-y-auto bg-background pt-[max(24px,calc(env(safe-area-inset-top)+var(--pwa-top-offset)))] pr-[max(20px,env(safe-area-inset-right))] pb-[max(24px,env(safe-area-inset-bottom))] pl-[max(20px,env(safe-area-inset-left))] [-webkit-overflow-scrolling:touch]">
       <div className="mx-auto w-full max-w-[760px]">
         <AppHeader action="settings" />
 

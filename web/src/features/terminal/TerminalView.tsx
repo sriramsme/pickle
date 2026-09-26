@@ -287,7 +287,7 @@ export function TerminalView({ session }: { session: string }) {
   return (
     <>
       <div
-        className="pointer-events-none absolute top-[max(12px,env(safe-area-inset-top))] right-[max(16px,env(safe-area-inset-right))] z-10 flex items-center gap-1.5 rounded-full border border-border bg-surface/85 px-[7px] py-1 text-[11px] leading-none text-muted-foreground"
+        className="pointer-events-none absolute top-[max(12px,calc(env(safe-area-inset-top)+var(--pwa-top-offset)))] right-[max(16px,env(safe-area-inset-right))] z-10 flex items-center gap-1.5 rounded-full border border-border bg-surface/85 px-[7px] py-1 text-[11px] leading-none text-muted-foreground"
         aria-live="polite"
       >
         <span className={`h-1.5 w-1.5 rounded-full ${statusDotClass[status]}`} aria-hidden="true" />

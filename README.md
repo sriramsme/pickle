@@ -7,6 +7,8 @@ and other tools that already run on that machine.
 Your work stays on the host. tmux keeps it alive when the browser closes or the
 network drops.
 
+![Pickle on iPhone](assets/pickle.png)
+
 ## What it does
 
 - Runs a real tmux terminal in the browser
@@ -64,6 +66,8 @@ access to its host, so treat access to it like SSH access.
 Open the private Tailscale address in Safari on an iPhone or iPad, use the Share
 menu, and choose **Add to Home Screen**. Pickle opens as a standalone app and
 reconnects to the same tmux session when possible.
+
+![Pickle terminal on iPad](assets/pickle1.png)
 
 ## Agents and notifications
 

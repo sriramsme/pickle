@@ -25,6 +25,7 @@
 :root,
 :root[data-color-theme="pickle"] {
   color-scheme: dark;
+  --pwa-top-offset: 0px;
   --background: #0b0b0b;
   --foreground: #e7e2d9;
   --foreground-subtle: #bdb7ad;
@@ -37,6 +38,12 @@
   --accent-subtle: #2a1d0c;
   --danger: #b97a61;
   --border: #292826;
+}
+
+@media (display-mode: standalone) {
+  :root {
+    --pwa-top-offset: 32px;
+  }
 }
 
 @layer base {

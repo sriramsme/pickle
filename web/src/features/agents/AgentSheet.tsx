@@ -192,14 +192,14 @@ function AgentBadge({ kind }: { kind?: Agent["kind"] }) {
 
 function UsageCard({ usage }: { usage: AgentUsage }) {
   return (
-    <div className="rounded-2xl bg-background p-4">
-      <div className="mb-4 flex items-center gap-2.5">
+    <div>
+      <div className="mb-3 flex items-center gap-2.5">
         <AgentMark className="h-5 w-5 text-foreground" kind={usage.kind} />
         <span className="text-xs font-medium capitalize text-foreground-subtle">
           {usage.plan?.replaceAll("_", " ")}
         </span>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         {usage.windows.map((window) => (
           <UsageWindow key={`${window.durationMinutes ?? 0}:${window.resetsAt ?? ""}`} window={window} />
         ))}
@@ -239,9 +239,9 @@ function UsageWindow({ window }: { window: AgentUsageWindow }) {
 
 function UsageSkeleton() {
   return (
-    <div aria-label="Loading usage" className="animate-pulse rounded-2xl bg-background p-4">
-      <div className="mb-4 h-5 w-20 rounded bg-quiet" />
-      <div className="grid grid-cols-2 gap-4">
+    <div aria-label="Loading usage" className="animate-pulse">
+      <div className="mb-3 h-5 w-20 rounded bg-quiet" />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         <div className="h-8 rounded bg-surface-subtle" />
         <div className="h-8 rounded bg-surface-subtle" />
       </div>

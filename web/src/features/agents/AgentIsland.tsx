@@ -52,7 +52,7 @@ export function AgentIsland() {
         aria-expanded={sheetOpen}
         aria-haspopup="dialog"
         aria-label={latest ? `Open agents: ${latest.message}` : "Open agents"}
-        className="fixed top-[max(10px,env(safe-area-inset-top))] left-1/2 z-40 flex h-8 max-w-[min(360px,46vw)] -translate-x-1/2 cursor-pointer touch-manipulation items-center gap-2 overflow-hidden rounded-full border border-border bg-surface/95 px-3 text-left text-[11px] text-foreground-subtle shadow-[0_8px_28px_rgba(0,0,0,0.28)] backdrop-blur-md transition-colors duration-200 hover:border-accent/50 hover:bg-surface focus-visible:border-accent focus-visible:outline-none active:bg-accent-subtle max-[620px]:max-w-[40vw]"
+        className="fixed inset-x-0 top-[max(10px,calc(env(safe-area-inset-top)+var(--pwa-top-offset)))] z-40 mx-auto flex h-8 w-fit max-w-[min(360px,46vw)] cursor-pointer touch-manipulation items-center gap-2 overflow-hidden rounded-full border border-border bg-surface px-3 text-left text-[11px] text-foreground-subtle transition-colors duration-200 hover:border-accent/50 hover:bg-surface focus-visible:border-accent focus-visible:outline-none active:bg-accent-subtle max-[620px]:max-w-[40vw] sm:h-9 sm:min-w-28 sm:justify-center sm:px-4 sm:text-xs"
         onClick={() => setSheetOpen(true)}
         type="button"
       >
