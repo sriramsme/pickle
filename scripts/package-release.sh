@@ -9,7 +9,8 @@ pnpm --dir web build
 mkdir -p build
 
 cp contrib/systemd/pickle.service build/pickle.service
-artifacts=("pickle.service")
+cp install.sh build/install.sh
+artifacts=("pickle.service" "install.sh")
 for arch in amd64 arm64; do
   artifact="pickle_linux_${arch}"
   CGO_ENABLED=0 GOOS=linux GOARCH="$arch" \

@@ -34,6 +34,7 @@ jobs:
           gh release create "$GITHUB_REF_NAME"
           build/pickle_linux_*
           build/pickle.service
+          build/install.sh
           build/checksums.txt
           --verify-tag
           --generate-notes

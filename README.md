@@ -35,7 +35,7 @@ hosts are not supported yet.
 Download and run the installer as your normal user:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/sriramsme/pickle/main/install.sh -o install.sh
+curl -fsSL https://github.com/sriramsme/pickle/releases/latest/download/install.sh -o install.sh
 sh install.sh
 ```
 
