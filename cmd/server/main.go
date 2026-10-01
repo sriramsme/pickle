@@ -18,18 +18,22 @@ import (
 )
 
 func main() {
-	if len(os.Args) > 1 {
-		switch os.Args[1] {
+	args := os.Args[1:]
+	if len(args) == 2 && args[0] == "help" {
+		args = []string{args[1], "--help"}
+	}
+	if len(args) > 0 {
+		switch args[0] {
 		case "start", "stop", "restart", "status", "doctor", "uninstall":
-			if err := cli.RunManage(context.Background(), os.Args[1], os.Args[2:], os.Stdout, os.Stderr); err != nil && !errors.Is(err, flag.ErrHelp) {
-				fmt.Fprintf(os.Stderr, "pickle %s: %v\n", os.Args[1], err)
+			if err := cli.RunManage(context.Background(), args[0], args[1:], os.Stdout, os.Stderr); err != nil && !errors.Is(err, flag.ErrHelp) {
+				fmt.Fprintf(os.Stderr, "pickle %s: %v\n", args[0], err)
 				os.Exit(1)
 			}
 			return
 		}
 	}
-	if len(os.Args) > 1 && os.Args[1] == "notify" {
-		if err := cli.RunNotify(context.Background(), os.Args[2:], os.Stdin, os.Stdout, os.Stderr); err != nil {
+	if len(args) > 0 && args[0] == "notify" {
+		if err := cli.RunNotify(context.Background(), args[1:], os.Stdin, os.Stdout, os.Stderr); err != nil {
 			if errors.Is(err, flag.ErrHelp) {
 				return
 			}
@@ -51,6 +55,7 @@ func main() {
 		fmt.Fprintln(flag.CommandLine.Output(), "Usage: pickle [server options]")
 		fmt.Fprintln(flag.CommandLine.Output(), "       pickle notify [options] <message>")
 		fmt.Fprintln(flag.CommandLine.Output(), "       pickle <command> [options]")
+		fmt.Fprintln(flag.CommandLine.Output(), "       pickle help <command>")
 		fmt.Fprintln(flag.CommandLine.Output(), "\nCommands:")
 		fmt.Fprintln(flag.CommandLine.Output(), "  start / stop / restart  Manage the installed user service")
 		fmt.Fprintln(flag.CommandLine.Output(), "  status                  Show service and server status")
@@ -60,11 +65,13 @@ func main() {
 		fmt.Fprintln(flag.CommandLine.Output())
 		flag.PrintDefaults()
 	}
-	if len(os.Args) > 1 && os.Args[1] == "help" {
+	if len(args) > 0 && args[0] == "help" {
 		flag.Usage()
 		return
 	}
-	flag.Parse()
+	if err := flag.CommandLine.Parse(args); err != nil {
+		os.Exit(2)
+	}
 	if flag.NArg() != 0 {
 		fmt.Fprintf(os.Stderr, "Unknown command: %s. Run pickle help for available commands.\n", flag.Arg(0))
 		os.Exit(1)

@@ -92,8 +92,26 @@ pickle notify --urgency high "Waiting for your approval"
 When run inside tmux, the command automatically identifies the agent and pane,
 adds that context to the title, and opens the relevant session when tapped.
 
-See [Notifications](docs/notifications.md) for every option and a ready-to-copy
-instruction for your root agent configuration.
+Run `pickle notify --help` for options and examples.
+
+### Let your agents notify you
+
+Enable notifications in Pickle's Settings, then add something like this to your agent's instructions file, such as `AGENTS.md` or `CLAUDE.md`:
+
+```text
+When running on the Pickle host and the pickle command is available, use
+pickle notify when work is ready for review, you are blocked, or you need my input. Keep messages short and specific. Avoid routine progress notifications.
+Never include secrets or sensitive information.
+
+Use: pickle notify "<outcome or exact input needed>"
+Use --urgency high only when my input is needed to continue.
+If notification delivery fails, continue the task and mention the failure in your final response instead of retrying repeatedly.
+
+You can try `pickle help` or `pickle notify --help` to see all options.
+```
+
+See [Notifications](docs/notifications.md) for all options and more detailed
+agent instructions.
 
 ## More
 

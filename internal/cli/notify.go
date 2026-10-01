@@ -53,6 +53,16 @@ func RunNotify(ctx context.Context, args []string, input io.Reader, output, erro
 	timeout := flags.Duration("timeout", 15*time.Second, "maximum delivery time")
 	flags.Usage = func() {
 		fmt.Fprintln(errorOutput, "Usage: pickle notify [options] <message>")
+		fmt.Fprintln(errorOutput, "\nSend a notification to devices enabled in Pickle's Settings.")
+		fmt.Fprintln(errorOutput, "Inside tmux, the title and link automatically point to your current pane.")
+		fmt.Fprintln(errorOutput, "\nExamples:")
+		fmt.Fprintln(errorOutput, `  pickle notify "Tests passed; ready for review"`)
+		fmt.Fprintln(errorOutput, `  pickle notify --urgency high "Waiting for your approval"`)
+		fmt.Fprintln(errorOutput, `  pickle notify --title "Build" --url /sessions "Build finished"`)
+		fmt.Fprintln(errorOutput, `  printf 'Build finished' | pickle notify --stdin --json`)
+		fmt.Fprintln(errorOutput, "\nPut options before the message. PICKLE_URL overrides the default server address.")
+		fmt.Fprintln(errorOutput, "Use --tag to replace an earlier notification with the same tag.")
+		fmt.Fprintln(errorOutput, "\nOptions:")
 		fmt.Fprintln(errorOutput)
 		flags.PrintDefaults()
 	}

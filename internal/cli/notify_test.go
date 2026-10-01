@@ -3,11 +3,26 @@ package cli
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"flag"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 )
+
+func TestNotifyHelpShowsExamplesWithoutSending(t *testing.T) {
+	var help bytes.Buffer
+	err := RunNotify(t.Context(), []string{"--help"}, strings.NewReader(""), &bytes.Buffer{}, &help)
+	if !errors.Is(err, flag.ErrHelp) {
+		t.Fatalf("expected help, got %v", err)
+	}
+	for _, text := range []string{"Examples:", "--urgency high", "--stdin --json", "PICKLE_URL", "Options:"} {
+		if !strings.Contains(help.String(), text) {
+			t.Fatalf("help missing %q", text)
+		}
+	}
+}
 
 func TestRunNotifySendsConfiguredNotification(t *testing.T) {
 	t.Setenv("TMUX_PANE", "")
