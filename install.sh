@@ -89,23 +89,24 @@ if [ "${PICKLE_SKIP_SERVICE:-0}" != "1" ] && command -v systemctl >/dev/null 2>&
     if systemctl --user is-active --quiet pickle; then
       systemctl --user restart pickle && service_started=true
     else
-      systemctl --user enable --now pickle && service_started=true
+      systemctl --user --quiet enable --now pickle && service_started=true
     fi
   fi
 fi
 
-printf '\nPickle is installed at %s.\n' "$install_path"
 if [ "$service_started" = true ]; then
-  printf 'Open http://127.0.0.1:8080/setup\n'
-  printf 'On a headless host, enable startup before login with:\n'
-  printf '  sudo loginctl enable-linger %s\n' "$(id -un)"
+  printf '\nPickle is installed and running.\n\n'
+  printf 'Open http://127.0.0.1:8080/setup to get started.\n'
 else
+  printf '\nPickle is installed.\n\n'
   printf 'Start it with: %s\n' "$install_path"
-  printf 'Then open http://127.0.0.1:8080/setup\n'
+  printf 'Then open http://127.0.0.1:8080/setup to get started.\n'
 fi
 
+printf '\nRun pickle help to see available commands.\n'
+
 if command -v tailscale >/dev/null 2>&1; then
-  printf '\nFor private access from your other devices, run:\n'
+  printf '\nTo access it from your other devices:\n'
   printf '  tailscale serve --bg 8080\n'
 else
   printf '\nFor private remote access, install Tailscale:\n'

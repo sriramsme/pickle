@@ -18,6 +18,16 @@ import (
 )
 
 func main() {
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "start", "stop", "restart", "status", "doctor", "uninstall":
+			if err := cli.RunManage(context.Background(), os.Args[1], os.Args[2:], os.Stdout, os.Stderr); err != nil && !errors.Is(err, flag.ErrHelp) {
+				fmt.Fprintf(os.Stderr, "pickle %s: %v\n", os.Args[1], err)
+				os.Exit(1)
+			}
+			return
+		}
+	}
 	if len(os.Args) > 1 && os.Args[1] == "notify" {
 		if err := cli.RunNotify(context.Background(), os.Args[2:], os.Stdin, os.Stdout, os.Stderr); err != nil {
 			if errors.Is(err, flag.ErrHelp) {
@@ -40,6 +50,13 @@ func main() {
 	flag.Usage = func() {
 		fmt.Fprintln(flag.CommandLine.Output(), "Usage: pickle [server options]")
 		fmt.Fprintln(flag.CommandLine.Output(), "       pickle notify [options] <message>")
+		fmt.Fprintln(flag.CommandLine.Output(), "       pickle <command> [options]")
+		fmt.Fprintln(flag.CommandLine.Output(), "\nCommands:")
+		fmt.Fprintln(flag.CommandLine.Output(), "  start / stop / restart  Manage the installed user service")
+		fmt.Fprintln(flag.CommandLine.Output(), "  status                  Show service and server status")
+		fmt.Fprintln(flag.CommandLine.Output(), "  doctor                  Check setup and connectivity")
+		fmt.Fprintln(flag.CommandLine.Output(), "  notify                  Send a notification to your devices")
+		fmt.Fprintln(flag.CommandLine.Output(), "  uninstall [--purge]     Remove Pickle; keep settings by default")
 		fmt.Fprintln(flag.CommandLine.Output())
 		flag.PrintDefaults()
 	}
@@ -48,6 +65,10 @@ func main() {
 		return
 	}
 	flag.Parse()
+	if flag.NArg() != 0 {
+		fmt.Fprintf(os.Stderr, "Unknown command: %s. Run pickle help for available commands.\n", flag.Arg(0))
+		os.Exit(1)
+	}
 
 	settings, err := config.Load(*configPath, filepath.Join(home, "projects"), *projectsDir)
 	if err != nil {

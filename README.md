@@ -45,6 +45,11 @@ address it prints and choose the folder that contains your projects.
 
 Run the installer again later to update to the latest release.
 
+Use `pickle status` to check the server, `pickle start`, `pickle stop`, or
+`pickle restart` to manage it, and `pickle doctor` to check your setup.
+`pickle uninstall` removes the installation and keeps your settings;
+`pickle uninstall --purge` removes those too. Run `pickle help` for all commands.
+
 ## Private access with Tailscale
 
 Install Tailscale using its [Linux guide](https://tailscale.com/docs/install/linux),
