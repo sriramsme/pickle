@@ -99,6 +99,9 @@ Run `pickle notify --help` for options and examples.
 Enable notifications in Pickle's Settings, then add something like this to your agent's instructions file, such as `AGENTS.md` or `CLAUDE.md`:
 
 ```text
+Pickle is a self-hosted browser terminal that lets me access this Linux machine
+from my other devices. Its CLI can send notifications to my enabled devices.
+
 When running on the Pickle host and the pickle command is available, use
 pickle notify when work is ready for review, you are blocked, or you need my input. Keep messages short and specific. Avoid routine progress notifications.
 Never include secrets or sensitive information.

@@ -62,6 +62,9 @@ coding agents:
 ```md
 ## Pickle notifications
 
+Pickle is a self-hosted browser terminal that lets me access this Linux machine
+from my other devices. Its CLI can send notifications to my enabled devices.
+
 If the `pickle` command is available, send one concise notification when:
 
 - you finish a task that took long enough that I may have stepped away

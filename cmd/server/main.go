@@ -52,6 +52,10 @@ func main() {
 	configPath := flag.String("config", config.DefaultPath(home), "configuration file")
 	projectsDir := flag.String("projects-dir", "", "override the configured projects directory")
 	flag.Usage = func() {
+		fmt.Fprintln(flag.CommandLine.Output(), "Pickle is a self-hosted browser terminal for this Linux machine.")
+		fmt.Fprintln(flag.CommandLine.Output(), "It connects your devices to persistent tmux sessions over a private network.")
+		fmt.Fprintln(flag.CommandLine.Output(), "Use pickle notify to send notifications to devices enabled in Pickle's Settings.")
+		fmt.Fprintln(flag.CommandLine.Output())
 		fmt.Fprintln(flag.CommandLine.Output(), "Usage: pickle [server options]")
 		fmt.Fprintln(flag.CommandLine.Output(), "       pickle notify [options] <message>")
 		fmt.Fprintln(flag.CommandLine.Output(), "       pickle <command> [options]")
